@@ -1,0 +1,19 @@
+# Farmer Shield AI Service - Dependencies
+# Python 3.9+ required
+
+# Web Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Deep Learning
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Image Processing
+pillow>=10.0.0
+
+# HTTP Requests
+requests>=2.31.0
+
+# Data Validation
+pydantic>=2.0.0

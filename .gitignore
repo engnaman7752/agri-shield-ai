@@ -1,0 +1,74 @@
+# ============================================
+# Agri Shield AI - Git Ignore
+# ============================================
+
+# ================== IDE ==================
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+.DS_Store
+
+# ================== Java/Maven ==================
+backend/target/
+*.class
+*.jar
+*.war
+*.log
+hs_err_pid*
+
+# ================== Python ==================
+ai_service/__pycache__/
+ai_service/*.pyc
+ai_service/venv/
+ai_service/.venv/
+*.egg-info/
+.eggs/
+
+# ================== Flutter ==================
+farmer_app/.dart_tool/
+farmer_app/.flutter-plugins
+farmer_app/.flutter-plugins-dependencies
+farmer_app/build/
+farmer_app/.packages
+farmer_app/pubspec.lock
+
+patwari_app/.dart_tool/
+patwari_app/.flutter-plugins
+patwari_app/.flutter-plugins-dependencies
+patwari_app/build/
+patwari_app/.packages
+patwari_app/pubspec.lock
+
+# ================== Android ==================
+**/android/.gradle/
+**/android/local.properties
+**/android/app/debug/
+**/android/app/release/
+**/android/captures/
+*.apk
+*.aab
+
+# ================== iOS ==================
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+*.xcworkspace
+
+# ================== Environment ==================
+.env
+.env.local
+.env.*.local
+*.properties.local
+application-local.properties
+
+# ================== Uploads ==================
+uploads/claims/*/
+
+# ================== Misc ==================
+*.log
+*.tmp
+*.temp
+node_modules/

@@ -1,0 +1,2 @@
+-- Reverting to the hash that is confirmed to work with the password 'password'
+UPDATE patwaris SET password_hash = '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi';

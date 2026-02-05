@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Farmer Shield</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i data-lucide="shield-check" class="logo-icon"></i>
+                <span class="logo-text">Farmer Shield</span>
+            </div>
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" data-tab="overview">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span>Overview</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="claims">
+                    <i data-lucide="file-text"></i>
+                    <span>AI Claims</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="sensors">
+                    <i data-lucide="cpu"></i>
+                    <span>IoT Sensors</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="settings">
+                    <i data-lucide="settings"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="admin-profile">
+                    <div class="avatar">A</div>
+                    <div class="profile-info">
+                        <span class="name">Main Admin</span>
+                        <span class="role">System Root</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <h1 id="page-title">Overview</h1>
+                <div class="top-actions">
+                    <button class="btn btn-icon"><i data-lucide="bell"></i></button>
+                    <button class="btn btn-primary" id="refresh-btn">
+                        <i data-lucide="refresh-cw"></i>
+                        <span>Refresh Data</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Overview Tab -->
+            <section id="overview-tab" class="tab-content active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon farmer"><i data-lucide="users"></i></div>
+                        <div class="stat-info">
+                            <span class="label">Total Farmers</span>
+                            <h2 id="stat-farmers">--</h2>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon policy"><i data-lucide="file-check"></i></div>
+                        <div class="stat-info">
+                            <span class="label">Active Policies</span>
+                            <h2 id="stat-policies">--</h2>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon cover"><i data-lucide="indian-rupee"></i></div>
+                        <div class="stat-info">
+                            <span class="label">Total Coverage</span>
+                            <h2 id="stat-coverage">--</h2>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon claim"><i data-lucide="alert-circle"></i></div>
+                        <div class="stat-info">
+                            <span class="label">Pending Claims</span>
+                            <h2 id="stat-pending-claims">--</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="card chart-card flex-2">
+                        <div class="card-header">
+                            <h3>Policy & Claim Trends</h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="trendsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card flex-1">
+                        <div class="card-header">
+                            <h3>Quick Actions</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="action-list">
+                                <button class="action-btn">
+                                    <i data-lucide="user-plus"></i>
+                                    <span>Onboard New Patwari</span>
+                                </button>
+                                <button class="action-btn">
+                                    <i data-lucide="download"></i>
+                                    <span>Export Monthly Report</span>
+                                </button>
+                                <button class="action-btn">
+                                    <i data-lucide="settings"></i>
+                                    <span>System Health Check</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Claims Tab -->
+            <section id="claims-tab" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>AI-Assessed Claims</h3>
+                        <div class="search-box">
+                            <i data-lucide="search"></i>
+                            <input type="text" placeholder="Search by Policy #">
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Policy Number</th>
+                                    <th>Damage %</th>
+                                    <th>AI Conclusion</th>
+                                    <th>Status</th>
+                                    <th>Processed At</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="claims-table-body">
+                                <!-- Claims injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sensors Tab -->
+            <section id="sensors-tab" class="tab-content">
+                <div class="sensor-header">
+                    <div class="sensor-stats">
+                        <div class="sensor-stat">
+                            <span id="stat-sensor-total">--</span>
+                            <label>Total Sensors</label>
+                        </div>
+                        <div class="sensor-stat online">
+                            <span id="stat-sensor-online">--</span>
+                            <label>Assigned</label>
+                        </div>
+                        <div class="sensor-stat offline">
+                            <span id="stat-sensor-available">--</span>
+                            <label>Stock</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="sensor-grid" id="sensor-grid-container">
+                    <!-- Sensors injected here -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Claim Detail Modal -->
+    <div class="modal" id="claim-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Claim Analysis Detail</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body-content">
+                <!-- Modal content injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
