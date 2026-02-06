@@ -8,6 +8,7 @@ class ClaimModel {
   final double? damagePercentage;
   final double? estimatedPayout;
   final List<String> imageUrls;
+  final String? diseaseDetected;
   final String? remarks;
   final String createdAt;
 
@@ -21,23 +22,25 @@ class ClaimModel {
     this.damagePercentage,
     this.estimatedPayout,
     required this.imageUrls,
+    this.diseaseDetected,
     this.remarks,
     required this.createdAt,
   });
 
   factory ClaimModel.fromJson(Map<String, dynamic> json) {
     return ClaimModel(
-      id: json['id'],
-      insuranceId: json['insuranceId'],
-      policyNumber: json['policyNumber'],
-      latitude: (json['latitude'] as num).toDouble(),
-      longitude: (json['longitude'] as num).toDouble(),
-      status: json['status'],
+      id: json['id']?.toString() ?? '',
+      insuranceId: json['insuranceId']?.toString() ?? '',
+      policyNumber: json['policyNumber']?.toString() ?? '',
+      latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
+      longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
+      status: json['status']?.toString() ?? 'PENDING',
       damagePercentage: json['damagePercentage'] != null ? (json['damagePercentage'] as num).toDouble() : null,
       estimatedPayout: json['claimAmount'] != null ? (json['claimAmount'] as num).toDouble() : null,
       imageUrls: List<String>.from(json['imageUrls'] ?? []),
-      remarks: json['diseaseDetected'],
-      createdAt: json['filedAt'] ?? '',
+      diseaseDetected: json['diseaseDetected']?.toString(),
+      remarks: json['remarks']?.toString(),
+      createdAt: json['filedAt']?.toString() ?? '',
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:farmer_app/core/network/dio_client.dart';
 import '../providers/auth_provider.dart';
 import 'otp_page.dart';
 
@@ -16,10 +17,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   Future<void> _handleSendOtp() async {
     String phone = _phoneController.text.trim();
-    // Sanitize: Remove everything except digits
     phone = phone.replaceAll(RegExp(r'\D'), '');
     
-    // If it's a 12 digit number starting with 91, take last 10
     if (phone.length == 12 && phone.startsWith('91')) {
       phone = phone.substring(2);
     }
@@ -49,35 +48,72 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           content: Text(errorMessage),
           backgroundColor: Colors.red,
           duration: const Duration(seconds: 5),
-          action: SnackBarAction(
-            label: 'Details', 
-            textColor: Colors.white,
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: const Text('Connection Error'),
-                  content: Text('Technical details: $errorMessage'),
-                  actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
-                ),
-              );
-            },
-          ),
         ),
       );
     }
   }
 
+  void _showIpDialog() async {
+    final currentIp = await DioClient.getServerIp();
+    final controller = TextEditingController(text: currentIp);
+    
+    if (!mounted) return;
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('🔧 Server IP'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'Enter your computer IP',
+            hintText: '192.168.1.100',
+          ),
+          keyboardType: TextInputType.number,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await DioClient.setServerIp(controller.text.trim());
+              if (ctx.mounted) Navigator.pop(ctx);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Server IP set to: ${controller.text.trim()}')),
+                );
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings, color: Colors.grey),
+            onPressed: _showIpDialog,
+            tooltip: 'Configure Server IP',
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 60),
+              const SizedBox(height: 20),
               const Icon(Icons.shield_outlined, size: 64, color: Colors.green),
               const SizedBox(height: 24),
               Text(

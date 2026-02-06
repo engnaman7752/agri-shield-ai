@@ -21,9 +21,9 @@ public class CropInsuranceApplication {
         System.out.println("╔═══════════════════════════════════════════════════════════╗");
         System.out.println("║     🌾 CROP INSURANCE SYSTEM STARTED SUCCESSFULLY! 🌾     ║");
         System.out.println("╠═══════════════════════════════════════════════════════════╣");
-        System.out.println("║  API:     http://localhost:8080                           ║");
-        System.out.println("║  Swagger: http://localhost:8080/swagger-ui.html           ║");
-        System.out.println("║  Docs:    http://localhost:8080/api-docs                  ║");
+        System.out.println("║  API:     http://localhost:8085                           ║");
+        System.out.println("║  Swagger: http://localhost:8085/swagger-ui.html           ║");
+        System.out.println("║  Docs:    http://localhost:8085/api-docs                  ║");
         System.out.println("╚═══════════════════════════════════════════════════════════╝");
         System.out.println("\n");
     }

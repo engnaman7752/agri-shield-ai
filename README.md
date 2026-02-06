@@ -56,6 +56,7 @@
 - Real-time claim status tracking
 - Razorpay payment integration
 - Push notifications for updates
+- **Runtime server configuration** — Easily switch backend servers without rebuilding
 
 ### 👮 For Patwaris (Government Verifiers)
 - QR-code based farmer verification
@@ -63,6 +64,7 @@
 - Field verification workflow
 - GPS-tagged inspections
 - Sensor data integration
+- **Runtime server configuration** — Configure backend IP on the fly
 
 ### 🤖 AI Capabilities
 - **Model**: ResNet-50 (50-layer Residual Network)
@@ -263,7 +265,18 @@ flutter pub get
 flutter run
 ```
 
-**Note**: Update the API base URL in each app's configuration to point to your backend server.
+#### ⚙️ Server Configuration
+
+Both mobile apps support **runtime server IP configuration**. On first launch or from the login screen:
+
+1. **Tap the settings icon** (gear icon) on the login screen
+2. **Enter your server IP** (e.g., `192.168.1.100:8080`)
+3. **Save** — the app will use this server for all API calls
+
+This is useful when:
+- Testing on different networks (e.g., switching Wi-Fi)
+- Deploying to multiple environments
+- Development with changing IP addresses
 
 ---
 

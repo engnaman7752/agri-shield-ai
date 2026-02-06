@@ -15,14 +15,22 @@ class AuthRepository {
         'password': password,
       });
 
-      if (response.data['success']) {
-        final token = response.data['data']['token'];
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(AppConstants.tokenKey, token);
-        return (true, null);
+      print('Login response: ${response.data}');
+
+      // AuthResponse is not wrapped in ApiResponse, token is directly in response
+      if (response.data['success'] == true) {
+        final token = response.data['token'];
+        if (token != null) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(AppConstants.tokenKey, token as String);
+          return (true, null);
+        } else {
+          return (false, 'Token not found in response');
+        }
       }
       return (false, (response.data['message'] ?? 'Login failed') as String);
     } catch (e) {
+      print('Login error: $e');
       return (false, e.toString());
     }
   }

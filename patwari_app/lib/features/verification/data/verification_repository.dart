@@ -9,13 +9,14 @@ class VerificationRepository {
   Future<List<VerificationModel>> getPendingVerifications() async {
     try {
       final response = await _dio.get('patwari/verifications/pending');
-      if (response.data['success']) {
+      if (response.data['success'] == true && response.data['data'] != null) {
         return (response.data['data'] as List)
             .map((e) => VerificationModel.fromJson(e))
             .toList();
       }
       return [];
     } catch (e) {
+      print('Pending verifications error: $e');
       return [];
     }
   }
@@ -23,13 +24,15 @@ class VerificationRepository {
   Future<List<SensorModel>> getAvailableSensors() async {
     try {
       final response = await _dio.get('patwari/sensors/available');
-      if (response.data['success']) {
+      print('Available sensors response: ${response.data}');
+      if (response.data['success'] == true && response.data['data'] != null) {
         return (response.data['data'] as List)
             .map((e) => SensorModel.fromJson(e))
             .toList();
       }
       return [];
     } catch (e) {
+      print('Error fetching sensors: $e');
       return [];
     }
   }
@@ -37,8 +40,12 @@ class VerificationRepository {
   Future<Map<String, dynamic>> getDashboardStats() async {
     try {
       final response = await _dio.get('patwari/dashboard');
-      return response.data['data'] as Map<String, dynamic>;
+      if (response.data['success'] == true && response.data['data'] != null) {
+        return response.data['data'] as Map<String, dynamic>;
+      }
+      return {};
     } catch (e) {
+      print('Dashboard stats error: $e');
       return {};
     }
   }
@@ -50,14 +57,18 @@ class VerificationRepository {
     String? sensorCode,
   }) async {
     try {
+      // Backend expects 'status' as APPROVED/REJECTED enum
+      final status = action == 'APPROVE' ? 'APPROVED' : 'REJECTED';
       final response = await _dio.post('patwari/verifications/action', data: {
         'verificationId': verificationId,
-        'action': action,
+        'status': status,
         'remarks': remarks,
         'sensorCode': sensorCode,
       });
-      return response.data['success'];
+      print('Verification action response: ${response.data}');
+      return response.data['success'] == true;
     } catch (e) {
+      print('Verification action error: $e');
       return false;
     }
   }

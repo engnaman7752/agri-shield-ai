@@ -1,6 +1,6 @@
 class AppConstants {
   static const String appName = 'Farmer Shield';
-  static const String apiBaseUrl = 'http://172.22.13.13:8085/api/';
+  static const String apiBaseUrl = 'http://172.22.9.203:8085/api/';
   
   // Storage Keys
   static const String tokenKey = 'jwt_token';

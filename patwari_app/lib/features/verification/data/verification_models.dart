@@ -27,17 +27,17 @@ class VerificationModel {
 
   factory VerificationModel.fromJson(Map<String, dynamic> json) {
     return VerificationModel(
-      id: json['id'],
-      policyNumber: json['policyNumber'],
-      farmerName: json['farmerName'],
-      farmerPhone: json['farmerPhone'],
-      cropType: json['cropType'],
-      areaAcres: (json['areaAcres'] as num).toDouble(),
-      khasraNumber: json['khasraNumber'],
-      latitude: (json['latitude'] as num).toDouble(),
-      longitude: (json['longitude'] as num).toDouble(),
-      status: json['status'],
-      sensorCode: json['sensorCode'],
+      id: json['verificationId']?.toString() ?? json['id']?.toString() ?? '',
+      policyNumber: json['policyNumber']?.toString() ?? '',
+      farmerName: json['farmerName']?.toString() ?? 'Unknown',
+      farmerPhone: json['farmerPhone']?.toString() ?? '',
+      cropType: json['cropType']?.toString() ?? 'Unknown',
+      areaAcres: (json['areaAcres'] as num?)?.toDouble() ?? 0.0,
+      khasraNumber: json['khasraNumber']?.toString() ?? '',
+      latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
+      longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
+      status: json['status']?.toString() ?? 'PENDING',
+      sensorCode: json['sensorCode']?.toString(),
     );
   }
 }
@@ -50,8 +50,8 @@ class SensorModel {
 
   factory SensorModel.fromJson(Map<String, dynamic> json) {
     return SensorModel(
-      id: json['id'].toString(),
-      uniqueCode: json['uniqueCode'],
+      id: json['id']?.toString() ?? '',
+      uniqueCode: json['uniqueCode']?.toString() ?? '',
     );
   }
 }

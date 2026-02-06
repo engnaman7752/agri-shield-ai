@@ -189,3 +189,138 @@ SELECT 'PATWARI LOGIN (GovtID + Password):' as info;
 SELECT '  Kota:   PAT-RJ-001 | password123' as info;
 SELECT '  Bhopal: PAT-MP-001 | password123' as info;
 SELECT '========================================' as info;
+
+-- ============================================
+-- DEMO: PRE-APPROVED INSURANCE WITH SENSORS
+-- ============================================
+-- This creates ready-to-use insurance for demo
+
+-- First, create lands for demo farmer
+INSERT INTO lands (id, farmer_id, khasra_number, area_acres, crop_type, latitude, longitude, sensor_id)
+SELECT 
+    gen_random_uuid(),
+    f.id,
+    'RN-101/1',
+    5.50,
+    'Wheat',
+    25.0831,
+    75.8621,
+    (SELECT id FROM sensors WHERE unique_code = 'SENS-001' LIMIT 1)
+FROM farmers f WHERE f.phone = '8440071773'
+ON CONFLICT (khasra_number) DO NOTHING;
+
+INSERT INTO lands (id, farmer_id, khasra_number, area_acres, crop_type, latitude, longitude, sensor_id)
+SELECT 
+    gen_random_uuid(),
+    f.id,
+    'RN-102/1',
+    7.00,
+    'Rice',
+    25.0828,
+    75.8618,
+    (SELECT id FROM sensors WHERE unique_code = 'SENS-002' LIMIT 1)
+FROM farmers f WHERE f.phone = '8440071773'
+ON CONFLICT (khasra_number) DO NOTHING;
+
+INSERT INTO lands (id, farmer_id, khasra_number, area_acres, crop_type, latitude, longitude, sensor_id)
+SELECT 
+    gen_random_uuid(),
+    f.id,
+    'DEMO-001',
+    10.00,
+    'Soybean',
+    25.0845,
+    75.8632,
+    (SELECT id FROM sensors WHERE unique_code = 'SENS-003' LIMIT 1)
+FROM farmers f WHERE f.phone = '8440071773'
+ON CONFLICT (khasra_number) DO NOTHING;
+
+-- Create active insurance policies
+INSERT INTO insurance_policies (id, farmer_id, land_id, policy_number, premium_amount, coverage_amount, crop_type, start_date, end_date, status, razorpay_order_id, razorpay_payment_id)
+SELECT 
+    gen_random_uuid(),
+    f.id,
+    l.id,
+    'POL-DEMO-001',
+    5500.00,
+    275000.00,
+    'Wheat',
+    CURRENT_DATE - INTERVAL '30 days',
+    CURRENT_DATE + INTERVAL '150 days',
+    'ACTIVE',
+    'order_demo001',
+    'pay_demo001'
+FROM farmers f
+JOIN lands l ON l.farmer_id = f.id AND l.khasra_number = 'RN-101/1'
+WHERE f.phone = '8440071773'
+ON CONFLICT (policy_number) DO NOTHING;
+
+INSERT INTO insurance_policies (id, farmer_id, land_id, policy_number, premium_amount, coverage_amount, crop_type, start_date, end_date, status, razorpay_order_id, razorpay_payment_id)
+SELECT 
+    gen_random_uuid(),
+    f.id,
+    l.id,
+    'POL-DEMO-002',
+    10500.00,
+    420000.00,
+    'Rice',
+    CURRENT_DATE - INTERVAL '20 days',
+    CURRENT_DATE + INTERVAL '160 days',
+    'ACTIVE',
+    'order_demo002',
+    'pay_demo002'
+FROM farmers f
+JOIN lands l ON l.farmer_id = f.id AND l.khasra_number = 'RN-102/1'
+WHERE f.phone = '8440071773'
+ON CONFLICT (policy_number) DO NOTHING;
+
+INSERT INTO insurance_policies (id, farmer_id, land_id, policy_number, premium_amount, coverage_amount, crop_type, start_date, end_date, status, razorpay_order_id, razorpay_payment_id)
+SELECT 
+    gen_random_uuid(),
+    f.id,
+    l.id,
+    'POL-DEMO-003',
+    13750.00,
+    550000.00,
+    'Soybean',
+    CURRENT_DATE - INTERVAL '45 days',
+    CURRENT_DATE + INTERVAL '135 days',
+    'ACTIVE',
+    'order_demo003',
+    'pay_demo003'
+FROM farmers f
+JOIN lands l ON l.farmer_id = f.id AND l.khasra_number = 'DEMO-001'
+WHERE f.phone = '8440071773'
+ON CONFLICT (policy_number) DO NOTHING;
+
+-- Add sensor readings for demo
+INSERT INTO sensor_readings (sensor_id, soil_moisture, humidity, temperature, rainfall, recorded_at)
+SELECT s.id, 45.5, 72.3, 28.5, 12.0, NOW() - INTERVAL '1 hour'
+FROM sensors s WHERE s.unique_code = 'SENS-001'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO sensor_readings (sensor_id, soil_moisture, humidity, temperature, rainfall, recorded_at)
+SELECT s.id, 38.2, 68.7, 30.1, 8.5, NOW() - INTERVAL '1 hour'
+FROM sensors s WHERE s.unique_code = 'SENS-002'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO sensor_readings (sensor_id, soil_moisture, humidity, temperature, rainfall, recorded_at)
+SELECT s.id, 52.8, 75.4, 26.8, 15.2, NOW() - INTERVAL '1 hour'
+FROM sensors s WHERE s.unique_code = 'SENS-003'
+ON CONFLICT DO NOTHING;
+
+-- Add recent readings for live sensor data display
+INSERT INTO sensor_readings (sensor_id, soil_moisture, humidity, temperature, rainfall, recorded_at)
+SELECT s.id, 46.2, 71.8, 29.0, 11.5, NOW()
+FROM sensors s WHERE s.unique_code = 'SENS-001';
+
+INSERT INTO sensor_readings (sensor_id, soil_moisture, humidity, temperature, rainfall, recorded_at)
+SELECT s.id, 39.5, 69.2, 29.8, 9.0, NOW()
+FROM sensors s WHERE s.unique_code = 'SENS-002';
+
+INSERT INTO sensor_readings (sensor_id, soil_moisture, humidity, temperature, rainfall, recorded_at)
+SELECT s.id, 53.1, 74.9, 27.2, 14.8, NOW()
+FROM sensors s WHERE s.unique_code = 'SENS-003';
+
+SELECT 'DEMO DATA: 3 Active Insurance Policies Created!' as info;
+SELECT 'You can now file claims on these policies!' as info;

@@ -1,3 +1,9 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:farmer_app/core/theme/app_theme.dart';
+import 'package:farmer_app/features/auth/presentation/pages/login_page.dart';
+import 'package:farmer_app/features/dashboard/presentation/pages/dashboard_page.dart';
+import 'package:farmer_app/features/insurance/presentation/pages/apply_insurance_page.dart';
 import 'package:farmer_app/features/profile/presentation/pages/profile_page.dart';
 import 'package:farmer_app/core/services/notification_service.dart';
 
