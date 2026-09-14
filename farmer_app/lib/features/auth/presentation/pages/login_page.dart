@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:farmer_app/core/network/dio_client.dart';
 import '../providers/auth_provider.dart';
 import 'otp_page.dart';
+import 'package:farmer_app/l10n/app_localizations.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -95,6 +96,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -117,7 +120,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               const Icon(Icons.shield_outlined, size: 64, color: Colors.green),
               const SizedBox(height: 24),
               Text(
-                'Farmer Shield',
+                l10n?.appName ?? 'Farmer Shield',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Colors.green.shade800,
@@ -140,7 +143,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 onPressed: _isLoading ? null : _handleSendOtp,
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Get OTP'),
+                    : Text(l10n?.login ?? 'Login / Register with OTP'),
+              ),
+              const SizedBox(height: 24),
+              Center(
+                child: Text(
+                  'New Farmer? Just enter your phone number to register automatically.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                ),
               ),
             ],
           ),

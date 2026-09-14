@@ -22,6 +22,7 @@ public class Village {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "district_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private District district;
 
     @Column(name = "name", nullable = false, length = 50)

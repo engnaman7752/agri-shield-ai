@@ -22,4 +22,6 @@ public interface VillageRepository extends JpaRepository<Village, Long> {
             @Param("stateName") String stateName);
 
     Optional<Village> findByNameAndDistrictId(String name, Long districtId);
+
+    Optional<Village> findByName(String name);
 }

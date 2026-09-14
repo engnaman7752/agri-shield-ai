@@ -6,7 +6,7 @@
     <title>Admin Dashboard | Farmer Shield</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="style.css">
@@ -14,7 +14,7 @@
 <body>
     <div class="app-container">
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar glass">
             <div class="logo">
                 <i data-lucide="shield-check" class="logo-icon"></i>
                 <span class="logo-text">Farmer Shield</span>
@@ -30,7 +30,7 @@
                 </a>
                 <a href="#" class="nav-item" data-tab="sensors">
                     <i data-lucide="cpu"></i>
-                    <span>IoT Sensors</span>
+                    <span>IoT Telemetry</span>
                 </a>
                 <a href="#" class="nav-item" data-tab="settings">
                     <i data-lucide="settings"></i>
@@ -39,10 +39,10 @@
             </nav>
             <div class="sidebar-footer">
                 <div class="admin-profile">
-                    <div class="avatar">A</div>
+                    <div class="avatar">SJ</div>
                     <div class="profile-info">
-                        <span class="name">Main Admin</span>
-                        <span class="role">System Root</span>
+                        <span class="name">Senior Admin</span>
+                        <span class="role">Management Portal</span>
                     </div>
                 </div>
             </div>
@@ -51,12 +51,12 @@
         <!-- Main Content -->
         <main class="main-content">
             <header class="top-bar">
-                <h1 id="page-title">Overview</h1>
+                <h1 id="page-title">Command Center</h1>
                 <div class="top-actions">
                     <button class="btn btn-icon"><i data-lucide="bell"></i></button>
                     <button class="btn btn-primary" id="refresh-btn">
                         <i data-lucide="refresh-cw"></i>
-                        <span>Refresh Data</span>
+                        <span>Live Sync</span>
                     </button>
                 </div>
             </header>
@@ -64,62 +64,62 @@
             <!-- Overview Tab -->
             <section id="overview-tab" class="tab-content active">
                 <div class="stats-grid">
-                    <div class="stat-card">
+                    <div class="stat-card glass">
                         <div class="stat-icon farmer"><i data-lucide="users"></i></div>
                         <div class="stat-info">
                             <span class="label">Total Farmers</span>
                             <h2 id="stat-farmers">--</h2>
                         </div>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card glass">
                         <div class="stat-icon policy"><i data-lucide="file-check"></i></div>
                         <div class="stat-info">
                             <span class="label">Active Policies</span>
                             <h2 id="stat-policies">--</h2>
                         </div>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card glass">
                         <div class="stat-icon cover"><i data-lucide="indian-rupee"></i></div>
                         <div class="stat-info">
                             <span class="label">Total Coverage</span>
                             <h2 id="stat-coverage">--</h2>
                         </div>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card glass">
                         <div class="stat-icon claim"><i data-lucide="alert-circle"></i></div>
                         <div class="stat-info">
-                            <span class="label">Pending Claims</span>
+                            <span class="label">Claims Processed</span>
                             <h2 id="stat-pending-claims">--</h2>
                         </div>
                     </div>
                 </div>
 
                 <div class="row">
-                    <div class="card chart-card flex-2">
+                    <div class="card glass flex-2">
                         <div class="card-header">
-                            <h3>Policy & Claim Trends</h3>
+                            <h3>Real-time Operations</h3>
                         </div>
                         <div class="card-body">
-                            <canvas id="trendsChart"></canvas>
+                            <canvas id="trendsChart" style="max-height: 250px;"></canvas>
                         </div>
                     </div>
-                    <div class="card flex-1">
+                    <div class="card glass flex-1">
                         <div class="card-header">
-                            <h3>Quick Actions</h3>
+                            <h3>System Actions</h3>
                         </div>
                         <div class="card-body">
                             <div class="action-list">
                                 <button class="action-btn">
-                                    <i data-lucide="user-plus"></i>
-                                    <span>Onboard New Patwari</span>
+                                    <i data-lucide="radio"></i>
+                                    <span>Broadcast to IoT Fleet</span>
                                 </button>
                                 <button class="action-btn">
-                                    <i data-lucide="download"></i>
-                                    <span>Export Monthly Report</span>
+                                    <i data-lucide="brain-circuit"></i>
+                                    <span>Retrain Gemini Model</span>
                                 </button>
                                 <button class="action-btn">
-                                    <i data-lucide="settings"></i>
-                                    <span>System Health Check</span>
+                                    <i data-lucide="download-cloud"></i>
+                                    <span>Export Telemetry Data</span>
                                 </button>
                             </div>
                         </div>
@@ -129,23 +129,23 @@
 
             <!-- Claims Tab -->
             <section id="claims-tab" class="tab-content">
-                <div class="card">
+                <div class="card glass">
                     <div class="card-header">
-                        <h3>AI-Assessed Claims</h3>
+                        <h3>Automated AI Claims</h3>
                         <div class="search-box">
                             <i data-lucide="search"></i>
-                            <input type="text" placeholder="Search by Policy #">
+                            <input type="text" id="claim-search" placeholder="Search Khasra / Farmer...">
                         </div>
                     </div>
                     <div class="table-container">
                         <table>
                             <thead>
                                 <tr>
+                                    <th>Farmer / Location</th>
                                     <th>Policy Number</th>
-                                    <th>Damage %</th>
-                                    <th>AI Conclusion</th>
+                                    <th>AI Assessment</th>
+                                    <th>Payout Calculated</th>
                                     <th>Status</th>
-                                    <th>Processed At</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -161,17 +161,17 @@
             <section id="sensors-tab" class="tab-content">
                 <div class="sensor-header">
                     <div class="sensor-stats">
-                        <div class="sensor-stat">
+                        <div class="sensor-stat glass">
                             <span id="stat-sensor-total">--</span>
-                            <label>Total Sensors</label>
+                            <label>Hardware Fleet</label>
                         </div>
-                        <div class="sensor-stat online">
+                        <div class="sensor-stat online glass">
                             <span id="stat-sensor-online">--</span>
-                            <label>Assigned</label>
+                            <label>Transmitting Live</label>
                         </div>
-                        <div class="sensor-stat offline">
+                        <div class="sensor-stat offline glass">
                             <span id="stat-sensor-available">--</span>
-                            <label>Stock</label>
+                            <label>Warehouse Stock</label>
                         </div>
                     </div>
                 </div>
@@ -182,15 +182,15 @@
         </main>
     </div>
 
-    <!-- Claim Detail Modal -->
+    <!-- Premium Claim Detail Modal -->
     <div class="modal" id="claim-modal">
-        <div class="modal-content">
+        <div class="modal-content glass">
             <div class="modal-header">
-                <h3>Claim Analysis Detail</h3>
+                <h3>Comprehensive Claim Telemetry</h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body" id="modal-body-content">
-                <!-- Modal content injected here -->
+                <!-- Modal content injected via JS -->
             </div>
         </div>
     </div>

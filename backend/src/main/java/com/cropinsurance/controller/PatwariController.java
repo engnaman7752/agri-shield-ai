@@ -71,9 +71,19 @@ public class PatwariController {
      */
     @GetMapping("/sensors/available")
     @Operation(summary = "Get available sensors for assignment")
-    public ResponseEntity<ApiResponse<List<Sensor>>> getAvailableSensors() {
+    public ResponseEntity<ApiResponse<List<java.util.Map<String, Object>>>> getAvailableSensors() {
         List<Sensor> sensors = patwariService.getAvailableSensors();
-        return ResponseEntity.ok(ApiResponse.success(sensors));
+        // Convert to simple maps to avoid serialization issues
+        List<java.util.Map<String, Object>> sensorList = sensors.stream()
+                .map(s -> {
+                    java.util.Map<String, Object> map = new java.util.HashMap<>();
+                    map.put("id", s.getId().toString());
+                    map.put("uniqueCode", s.getUniqueCode());
+                    map.put("isActive", s.getIsActive());
+                    return map;
+                })
+                .collect(java.util.stream.Collectors.toList());
+        return ResponseEntity.ok(ApiResponse.success(sensorList));
     }
 
     /**
@@ -85,5 +95,27 @@ public class PatwariController {
             @AuthenticationPrincipal String userId) {
         Object stats = patwariService.getDashboardStats(UUID.fromString(userId));
         return ResponseEntity.ok(ApiResponse.success(stats));
+    }
+
+    /**
+     * Get pending khasra requests
+     */
+    @GetMapping("/khasra-requests/pending")
+    @Operation(summary = "Get pending khasra addition requests from farmers")
+    public ResponseEntity<ApiResponse<List<com.cropinsurance.dto.response.KhasraRequestResponse>>> getPendingKhasraRequests() {
+        var requests = patwariService.getPendingKhasraRequests();
+        return ResponseEntity.ok(ApiResponse.success(requests));
+    }
+
+    /**
+     * Process khasra request (approve/reject)
+     */
+    @PostMapping("/khasra-requests/action")
+    @Operation(summary = "Approve or reject a khasra addition request")
+    public ResponseEntity<ApiResponse<com.cropinsurance.dto.response.KhasraRequestResponse>> processKhasraRequest(
+            @AuthenticationPrincipal String userId,
+            @Valid @RequestBody com.cropinsurance.dto.request.KhasraActionRequest request) {
+        var result = patwariService.processKhasraRequest(UUID.fromString(userId), request);
+        return ResponseEntity.ok(ApiResponse.success(result, "Khasra request processed"));
     }
 }

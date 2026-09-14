@@ -2,8 +2,8 @@ import 'dart:math';
 import 'package:geolocator/geolocator.dart';
 
 class LocationUtils {
-  // Distance threshold in meters (200m)
-  static const double distanceThreshold = 200.0;
+  // Distance threshold in meters (100m geofencing)
+  static const double distanceThreshold = 100.0;
 
   /// Haversine formula to calculate distance between two points in meters
   static double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
@@ -29,15 +29,5 @@ class LocationUtils {
     }
 
     return (distance <= distanceThreshold, distance);
-  }
-
-  static bool _isAtDemoSite(Position current) {
-    // Add your demo site coordinates here
-    // Example: 23.2599, 77.4126 (Bhopal)
-    const demoLat = 23.2599;
-    const demoLon = 77.4126;
-    
-    final distance = calculateDistance(current.latitude, current.longitude, demoLat, demoLon);
-    return distance < 1000; // Within 1km of demo site counts as "At Farm" for presentation
   }
 }

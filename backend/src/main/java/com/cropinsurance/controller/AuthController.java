@@ -86,4 +86,26 @@ public class AuthController {
     public ResponseEntity<ApiResponse<String>> health() {
         return ResponseEntity.ok(ApiResponse.success("Crop Insurance API is running! 🌾"));
     }
+
+    /**
+     * Patwari forgot password - send OTP
+     */
+    @PostMapping("/patwari/forgot-password")
+    @Operation(summary = "Send OTP for password reset")
+    public ResponseEntity<OtpResponse> patwariiForgotPassword(
+            @Valid @RequestBody com.cropinsurance.dto.request.ForgotPasswordRequest request) {
+        OtpResponse response = authService.patwariiForgotPassword(request);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Patwari reset password with OTP
+     */
+    @PostMapping("/patwari/reset-password")
+    @Operation(summary = "Reset password with OTP verification")
+    public ResponseEntity<ApiResponse<String>> patwariiResetPassword(
+            @Valid @RequestBody com.cropinsurance.dto.request.ResetPasswordRequest request) {
+        authService.patwariiResetPassword(request);
+        return ResponseEntity.ok(ApiResponse.success("Password reset successfully!"));
+    }
 }

@@ -52,13 +52,28 @@ class _FieldVerificationPageState extends ConsumerState<FieldVerificationPage> {
             behavior: SnackBarBehavior.floating,
           ),
         );
+        // Refresh both verifications and sensors list
         ref.invalidate(pendingVerificationsProvider);
+        ref.invalidate(availableSensorsProvider);
+        ref.invalidate(patwariStatsProvider);
         Navigator.pop(context);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed - Sensor may already be assigned'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        // Refresh sensors list to get updated available sensors
+        ref.invalidate(availableSensorsProvider);
+        setState(() => _selectedSensor = null);
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
+      ref.invalidate(availableSensorsProvider);
     } finally {
       setState(() => _isProcessing = false);
     }
@@ -180,7 +195,8 @@ class _FieldVerificationPageState extends ConsumerState<FieldVerificationPage> {
                                     child: DropdownButton<SensorModel>(
                                       isExpanded: true,
                                       value: _selectedSensor,
-                                      hint: const Text('Select Sensor Code'),
+                                      hint: Text('Select Sensor (${sensors.length} available)'),
+                                      menuMaxHeight: 300, // Makes dropdown scrollable
                                       items: sensors.map((s) => DropdownMenuItem(
                                         value: s,
                                         child: Row(

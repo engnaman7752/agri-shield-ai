@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:farmer_app/core/services/notification_service.dart';
+import 'package:farmer_app/core/services/weather_service.dart';
 import 'claim_model.dart';
 
 class ClaimRepository {
@@ -13,6 +14,9 @@ class ClaimRepository {
     required double latitude,
     required double longitude,
     required List<XFile> images,
+    WeatherData? weatherData,
+    required String damageReason,
+    String? damageReasonDetail,
   }) async {
     try {
       final List<MultipartFile> multipartImages = [];
@@ -24,7 +28,15 @@ class ClaimRepository {
         'insuranceId': insuranceId,
         'latitude': latitude,
         'longitude': longitude,
+        'damageReason': damageReason,
+        if (damageReasonDetail != null) 'damageReasonDetail': damageReasonDetail,
         'images': multipartImages,
+        if (weatherData != null) ...{
+          'weatherTemperature': weatherData.temperature,
+          'weatherHumidity': weatherData.humidity,
+          'weatherCondition': weatherData.condition,
+          'weatherRainfall': weatherData.rainfall,
+        },
       });
 
       final response = await _dio.post(

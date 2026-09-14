@@ -7,5 +7,6 @@ public enum ClaimStatus {
     PENDING, // Claim filed, waiting for processing
     PROCESSING, // AI is analyzing
     APPROVED, // Claim approved (damage >= 75%)
-    REJECTED // Claim rejected (damage < 75%)
+    REJECTED, // Claim rejected completely
+    PATWARI_REVIEW // AI rejected, waiting for Patwari manual review
 }

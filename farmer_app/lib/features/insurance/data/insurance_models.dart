@@ -32,6 +32,7 @@ class InsuranceResponse {
   final double coverageAmount;
   final String status;
   final String verificationStatus;
+  final String? verificationRemarks;
   final double latitude;
   final double longitude;
 
@@ -45,25 +46,31 @@ class InsuranceResponse {
     required this.coverageAmount,
     required this.status,
     required this.verificationStatus,
+    this.verificationRemarks,
     required this.latitude,
     required this.longitude,
   });
 
   factory InsuranceResponse.fromJson(Map<String, dynamic> json) {
     return InsuranceResponse(
-      id: json['id'],
-      policyNumber: json['policyNumber'],
-      khasraNumber: json['khasraNumber'],
-      areaAcres: (json['areaAcres'] as num).toDouble(),
-      cropType: json['cropType'],
-      premiumAmount: (json['premiumAmount'] as num).toDouble(),
-      coverageAmount: (json['coverageAmount'] as num).toDouble(),
-      status: json['status'],
-      verificationStatus: json['verificationStatus'] ?? 'PENDING',
-      latitude: (json['latitude'] as num).toDouble(),
-      longitude: (json['longitude'] as num).toDouble(),
+      id: json['id']?.toString() ?? '',
+      policyNumber: json['policyNumber']?.toString() ?? '',
+      khasraNumber: json['khasraNumber']?.toString() ?? '',
+      areaAcres: (json['areaAcres'] as num?)?.toDouble() ?? 0.0,
+      cropType: json['cropType']?.toString() ?? '',
+      premiumAmount: (json['premiumAmount'] as num?)?.toDouble() ?? 0.0,
+      coverageAmount: (json['coverageAmount'] as num?)?.toDouble() ?? 0.0,
+      status: json['status']?.toString() ?? 'PENDING',
+      verificationStatus: json['verificationStatus']?.toString() ?? 'PENDING',
+      verificationRemarks: json['verificationRemarks']?.toString(),
+      latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
+      longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
     );
   }
+
+  bool get isRejected => verificationStatus == 'REJECTED';
+  bool get isApproved => verificationStatus == 'APPROVED';
+  bool get isPending => verificationStatus == 'PENDING';
 }
 
 class PaymentOrderResponse {

@@ -31,6 +31,9 @@ public class Patwari {
     @Column(name = "phone", nullable = false, length = 15)
     private String phone;
 
+    @Column(name = "email", length = 100)
+    private String email;
+
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 

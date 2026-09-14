@@ -29,13 +29,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    final profile = ref.read(userProfileProvider).value;
-    _nameController = TextEditingController(text: profile?.name);
-    _addressController = TextEditingController(text: profile?.address);
-    _holderController = TextEditingController(text: profile?.accountHolderName);
-    _bankController = TextEditingController(text: profile?.bankName);
-    _accountController = TextEditingController(text: profile?.accountNumber);
-    _ifscController = TextEditingController(text: profile?.ifscCode);
+    _nameController = TextEditingController();
+    _addressController = TextEditingController();
+    _holderController = TextEditingController();
+    _bankController = TextEditingController();
+    _accountController = TextEditingController();
+    _ifscController = TextEditingController();
   }
 
   @override
@@ -49,16 +48,17 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     super.dispose();
   }
 
-  void _save() async {
+  void _save(FarmerProfileModel? profile) async {
     if (!_formKey.currentState!.validate()) return;
+    if (profile == null) return;
 
     setState(() => _isLoading = true);
     final success = await ref.read(profileRepositoryProvider).updateProfile(
       name: _nameController.text.trim(),
       address: _addressController.text.trim(),
-      state: ref.read(userProfileProvider).value!.state,
-      district: ref.read(userProfileProvider).value!.district,
-      village: ref.read(userProfileProvider).value!.village,
+      state: profile.state,
+      district: profile.district,
+      village: profile.village,
       accountHolderName: _holderController.text.trim(),
       bankName: _bankController.text.trim(),
       accountNumber: _accountController.text.trim(),
@@ -77,50 +77,113 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final profileAsyncValue = ref.watch(userProfileProvider);
+
+    ref.listen(userProfileProvider, (previous, next) {
+      next.whenData((profile) {
+        if (profile != null && !_isEditing) {
+          _nameController.text = profile.name ?? '';
+          _addressController.text = profile.address ?? '';
+          _holderController.text = profile.accountHolderName ?? '';
+          _bankController.text = profile.bankName ?? '';
+          _accountController.text = profile.accountNumber ?? '';
+          _ifscController.text = profile.ifscCode ?? '';
+        }
+      });
+    });
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Profile'),
         actions: [
           IconButton(
             icon: Icon(_isEditing ? Icons.close : Icons.edit),
-            onPressed: () => setState(() => _isEditing = !_isEditing),
+            onPressed: () {
+              setState(() => _isEditing = !_isEditing);
+              // Reset values if canceled
+              if (!_isEditing) {
+                final profile = ref.read(userProfileProvider).value;
+                if (profile != null) {
+                  _nameController.text = profile.name ?? '';
+                  _addressController.text = profile.address ?? '';
+                  _holderController.text = profile.accountHolderName ?? '';
+                  _bankController.text = profile.bankName ?? '';
+                  _accountController.text = profile.accountNumber ?? '';
+                  _ifscController.text = profile.ifscCode ?? '';
+                }
+              }
+            },
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildSectionTitle('Personal Information'),
-              _buildField('Full Name', _nameController, Icons.person, enabled: _isEditing),
-              _buildField('Address', _addressController, Icons.location_on, enabled: _isEditing),
-              const SizedBox(height: 32),
-              _buildSectionTitle('Bank Details (For Claim Payouts)'),
-              const Text('Ensure these details are correct to receive insurance payouts direct to your account.', 
-                style: TextStyle(fontSize: 12, color: Colors.grey)),
-              const SizedBox(height: 16),
-              _buildField('Account Holder Name', _holderController, Icons.badge, enabled: _isEditing),
-              _buildField('Bank Name', _bankController, Icons.account_balance, enabled: _isEditing),
-              _buildField('Account Number', _accountController, Icons.numbers, enabled: _isEditing),
-              _buildField('IFSC Code', _ifscController, Icons.password, enabled: _isEditing),
-              
-              const SizedBox(height: 48),
-              if (_isEditing)
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _save,
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
-                    child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text('Save Changes'),
-                  ),
-                ),
-            ],
-          ),
-        ),
+      body: profileAsyncValue.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error: $err', style: const TextStyle(color: Colors.red))),
+        data: (profile) {
+          if (profile == null) {
+            return const Center(child: Text('No profile data found.'));
+          }
+
+          // Initial population if empty (on first load before listen triggers occasionally)
+          if (_nameController.text.isEmpty && !_isEditing) {
+            _nameController.text = profile.name ?? '';
+            _addressController.text = profile.address ?? '';
+            _holderController.text = profile.accountHolderName ?? '';
+            _bankController.text = profile.bankName ?? '';
+            _accountController.text = profile.accountNumber ?? '';
+            _ifscController.text = profile.ifscCode ?? '';
+          }
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSectionTitle('Personal Information'),
+                  _buildField('Full Name', _nameController, Icons.person, enabled: _isEditing),
+                  _buildField('Address', _addressController, Icons.location_on, enabled: _isEditing),
+                  const SizedBox(height: 32),
+                  _buildSectionTitle('Bank Details (For Claim Payouts)'),
+                  const Text('Ensure these details are correct to receive insurance payouts direct to your account.',
+                      style: TextStyle(fontSize: 12, color: Colors.grey)),
+                  const SizedBox(height: 16),
+                  _buildField('Account Holder Name', _holderController, Icons.badge, enabled: _isEditing),
+                  _buildField('Bank Name', _bankController, Icons.account_balance, enabled: _isEditing),
+                  _buildField('Account Number', _accountController, Icons.numbers, enabled: _isEditing),
+                  _buildField('IFSC Code', _ifscController, Icons.password, enabled: _isEditing),
+
+                  const SizedBox(height: 48),
+                  if (_isEditing)
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : () => _save(profile),
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                        child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text('Save Changes'),
+                      ),
+                    ),
+                  
+                  if (!_isEditing) ...[
+                    const Divider(height: 48),
+                    _buildSectionTitle('App Settings'),
+                    ListTile(
+                      leading: const Icon(Icons.language, color: Colors.blue),
+                      title: const Text('Language Settings'),
+                      subtitle: const Text('Change app language to Hindi, Marathi, etc.'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.pushNamed(context, '/settings/language'),
+                      tileColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }

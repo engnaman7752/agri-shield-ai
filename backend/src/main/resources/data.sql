@@ -9,11 +9,42 @@
 -- STATES
 -- ============================================
 INSERT INTO states (name, code) VALUES
+    ('Andhra Pradesh', 'AP'),
+    ('Arunachal Pradesh', 'AR'),
+    ('Assam', 'AS'),
+    ('Bihar', 'BR'),
+    ('Chhattisgarh', 'CG'),
+    ('Goa', 'GA'),
+    ('Gujarat', 'GJ'),
+    ('Haryana', 'HR'),
+    ('Himachal Pradesh', 'HP'),
+    ('Jharkhand', 'JH'),
+    ('Karnataka', 'KA'),
+    ('Kerala', 'KL'),
     ('Madhya Pradesh', 'MP'),
     ('Maharashtra', 'MH'),
-    ('Uttar Pradesh', 'UP'),
+    ('Manipur', 'MN'),
+    ('Meghalaya', 'ML'),
+    ('Mizoram', 'MZ'),
+    ('Nagaland', 'NL'),
+    ('Odisha', 'OD'),
+    ('Punjab', 'PB'),
     ('Rajasthan', 'RJ'),
-    ('Gujarat', 'GJ')
+    ('Sikkim', 'SK'),
+    ('Tamil Nadu', 'TN'),
+    ('Telangana', 'TG'),
+    ('Tripura', 'TR'),
+    ('Uttar Pradesh', 'UP'),
+    ('Uttarakhand', 'UK'),
+    ('West Bengal', 'WB'),
+    ('Andaman and Nicobar', 'AN'),
+    ('Chandigarh', 'CH'),
+    ('Dadra and Nagar Haveli', 'DN'),
+    ('Delhi', 'DL'),
+    ('Jammu and Kashmir', 'JK'),
+    ('Ladakh', 'LA'),
+    ('Lakshadweep', 'LD'),
+    ('Puducherry', 'PY')
 ON CONFLICT (name) DO NOTHING;
 
 -- ============================================
@@ -38,6 +69,27 @@ INSERT INTO districts (state_id, name)
 SELECT s.id, d.name FROM states s,
 (VALUES ('Pune'), ('Nagpur'), ('Mumbai')) AS d(name)
 WHERE s.code = 'MH'
+ON CONFLICT DO NOTHING;
+
+-- Punjab
+INSERT INTO districts (state_id, name) 
+SELECT s.id, d.name FROM states s,
+(VALUES ('Amritsar'), ('Ludhiana'), ('Jalandhar'), ('Patiala')) AS d(name)
+WHERE s.code = 'PB'
+ON CONFLICT DO NOTHING;
+
+-- Gujarat
+INSERT INTO districts (state_id, name) 
+SELECT s.id, d.name FROM states s,
+(VALUES ('Ahmedabad'), ('Surat'), ('Vadodara'), ('Rajkot')) AS d(name)
+WHERE s.code = 'GJ'
+ON CONFLICT DO NOTHING;
+
+-- Uttar Pradesh
+INSERT INTO districts (state_id, name) 
+SELECT s.id, d.name FROM states s,
+(VALUES ('Lucknow'), ('Kanpur'), ('Varanasi'), ('Agra')) AS d(name)
+WHERE s.code = 'UP'
 ON CONFLICT DO NOTHING;
 
 -- ============================================
@@ -71,6 +123,42 @@ JOIN states s ON d.state_id = s.id,
 WHERE s.code = 'MP' AND d.name = 'Bhopal'
 ON CONFLICT DO NOTHING;
 
+-- Punjab Villages (Amritsar)
+INSERT INTO villages (district_id, name, center_latitude, center_longitude)
+SELECT d.id, v.name, v.lat, v.lng
+FROM districts d
+JOIN states s ON d.state_id = s.id,
+(VALUES 
+    ('Attari', 31.6035, 74.6062),
+    ('Majitha', 31.7583, 74.9545)
+) AS v(name, lat, lng)
+WHERE s.code = 'PB' AND d.name = 'Amritsar'
+ON CONFLICT DO NOTHING;
+
+-- Gujarat Villages (Ahmedabad)
+INSERT INTO villages (district_id, name, center_latitude, center_longitude)
+SELECT d.id, v.name, v.lat, v.lng
+FROM districts d
+JOIN states s ON d.state_id = s.id,
+(VALUES 
+    ('Sanand', 22.9863, 72.3831),
+    ('Bavla', 22.8464, 72.3686)
+) AS v(name, lat, lng)
+WHERE s.code = 'GJ' AND d.name = 'Ahmedabad'
+ON CONFLICT DO NOTHING;
+
+-- Uttar Pradesh Villages (Lucknow)
+INSERT INTO villages (district_id, name, center_latitude, center_longitude)
+SELECT d.id, v.name, v.lat, v.lng
+FROM districts d
+JOIN states s ON d.state_id = s.id,
+(VALUES 
+    ('Bakshi Ka Talab', 26.9634, 80.9329),
+    ('Malihabad', 26.9190, 80.7061)
+) AS v(name, lat, lng)
+WHERE s.code = 'UP' AND d.name = 'Lucknow'
+ON CONFLICT DO NOTHING;
+
 -- ============================================
 -- KHASRA REGISTRY (Your Demo Location)
 -- ============================================
@@ -89,7 +177,14 @@ JOIN states s ON d.state_id = s.id,
     ('RN-103/1', 6.00, 25.0825, 75.8615),
     ('RN-201/1', 8.00, 25.0850, 75.8640),
     ('RN-201/2', 5.25, 25.0810, 75.8600),
-    ('DEMO-001', 10.00, 25.0845, 75.8632)
+    ('DEMO-001', 10.00, 25.0845, 75.8632),
+    ('RN-104/1', 6.50, 25.0832, 75.8622),
+    ('RN-104/2', 4.00, 25.0836, 75.8626),
+    ('RN-105/1', 8.50, 25.0829, 75.8619),
+    ('RN-105/2', 5.00, 25.0841, 75.8631),
+    ('RN-106/1', 7.50, 25.0826, 75.8616),
+    ('DEMO-002', 12.00, 25.0846, 75.8633),
+    ('DEMO-003', 15.00, 25.0847, 75.8634)
 ) AS k(khasra, area, lat, lng)
 WHERE v.name = 'Ranpur' AND s.code = 'RJ'
 ON CONFLICT DO NOTHING;
@@ -104,7 +199,10 @@ JOIN states s ON d.state_id = s.id,
     ('KH-101/1', 5.50, 23.2820, 77.4595),
     ('KH-101/2', 3.25, 23.2825, 77.4600),
     ('KH-102/1', 7.00, 23.2830, 77.4585),
-    ('KH-102/2', 4.50, 23.2815, 77.4590)
+    ('KH-102/2', 4.50, 23.2815, 77.4590),
+    ('KH-103/1', 8.50, 23.2825, 77.4590),
+    ('KH-103/2', 6.00, 23.2835, 77.4580),
+    ('KH-104/1', 9.00, 23.2840, 77.4570)
 ) AS k(khasra, area, lat, lng)
 WHERE v.name = 'Khajuri Kalan' AND s.code = 'MP'
 ON CONFLICT DO NOTHING;
@@ -167,7 +265,7 @@ ON CONFLICT (phone) DO NOTHING;
 -- ============================================
 -- Password: password123 (BCrypt hash)
 INSERT INTO patwaris (government_id, name, phone, password_hash, assigned_area) VALUES
-    ('PAT-RJ-001', 'Shyam Lal (Kota)', '9876500001', 
+    ('PAT-RJ-001', 'Shyam Lal (Kota)', '8440071773', 
      '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Kota, Rajasthan'),
     ('PAT-MP-001', 'Raghunath Rao (Bhopal)', '9876500002', 
      '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Bhopal, MP'),

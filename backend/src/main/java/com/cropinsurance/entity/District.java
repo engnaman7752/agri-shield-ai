@@ -20,6 +20,7 @@ public class District {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "state_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private State state;
 
     @Column(name = "name", nullable = false, length = 50)

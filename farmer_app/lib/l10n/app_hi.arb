@@ -1,0 +1,14 @@
+{
+  "@@locale": "hi",
+  "appName": "किसान सुरक्षा",
+  "dashboard": "डैशबोर्ड",
+  "fileClaim": "दावा करें",
+  "applyInsurance": "बीमा के लिए आवेदन करें",
+  "settings": "सेटिंग्स",
+  "language": "भाषा",
+  "login": "लॉगिन करें",
+  "home": "होम",
+  "myPolicies": "मेरी नीतियां",
+  "weather": "मौसम",
+  "profile": "प्रोफ़ाइल"
+}

@@ -39,4 +39,35 @@ class AuthRepository {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(AppConstants.tokenKey);
   }
+
+  Future<(bool, String?)> forgotPassword(String phone) async {
+    try {
+      final response = await _dio.post('auth/patwari/forgot-password', data: {
+        'phone': phone,
+        'method': 'SMS',
+      });
+      if (response.data['success'] == true) {
+        return (true, null);
+      }
+      return (false, response.data['message'] as String? ?? 'Failed to send OTP');
+    } catch (e) {
+      return (false, e.toString());
+    }
+  }
+
+  Future<(bool, String?)> resetPassword(String phone, String otp, String newPassword) async {
+    try {
+      final response = await _dio.post('auth/patwari/reset-password', data: {
+        'phone': phone,
+        'otp': otp,
+        'newPassword': newPassword,
+      });
+      if (response.data['success'] == true) {
+        return (true, null);
+      }
+      return (false, response.data['message'] as String? ?? 'Failed to reset password');
+    } catch (e) {
+      return (false, e.toString());
+    }
+  }
 }

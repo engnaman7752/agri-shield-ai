@@ -41,12 +41,24 @@ public class ClaimController {
             @RequestParam("insuranceId") UUID insuranceId,
             @RequestParam("latitude") BigDecimal latitude,
             @RequestParam("longitude") BigDecimal longitude,
+            @RequestParam(value = "weatherTemperature", required = false) BigDecimal weatherTemperature,
+            @RequestParam(value = "weatherHumidity", required = false) BigDecimal weatherHumidity,
+            @RequestParam(value = "weatherCondition", required = false) String weatherCondition,
+            @RequestParam(value = "weatherRainfall", required = false) BigDecimal weatherRainfall,
+            @RequestParam(value = "damageReason", required = false) String damageReason,
+            @RequestParam(value = "damageReasonDetail", required = false) String damageReasonDetail,
             @RequestParam("images") List<MultipartFile> images) {
 
         ClaimRequest request = ClaimRequest.builder()
                 .insuranceId(insuranceId)
                 .latitude(latitude)
                 .longitude(longitude)
+                .weatherTemperature(weatherTemperature)
+                .weatherHumidity(weatherHumidity)
+                .weatherCondition(weatherCondition)
+                .weatherRainfall(weatherRainfall)
+                .damageReason(damageReason)
+                .damageReasonDetail(damageReasonDetail)
                 .build();
 
         ClaimResponse response = claimService.fileClaim(UUID.fromString(userId), request, images);

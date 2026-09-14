@@ -75,8 +75,14 @@ CREATE TABLE IF NOT EXISTS farmers (
     state VARCHAR(50) NOT NULL,
     district VARCHAR(50) NOT NULL,
     village VARCHAR(50) NOT NULL,
+    aadhaar_number VARCHAR(12),
     profile_image VARCHAR(255),
     fcm_token VARCHAR(255),
+    -- Bank Details
+    account_holder_name VARCHAR(100),
+    bank_name VARCHAR(100),
+    account_number VARCHAR(20),
+    ifsc_code VARCHAR(15),
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -189,7 +195,15 @@ CREATE TABLE IF NOT EXISTS claims (
     damage_percentage DECIMAL(5, 2),
     claim_amount DECIMAL(12, 2),
     filed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    processed_at TIMESTAMP
+    processed_at TIMESTAMP,
+    -- Weather data captured at claim time
+    weather_temp DECIMAL(5, 2),
+    weather_humidity DECIMAL(5, 2),
+    weather_condition VARCHAR(50),
+    weather_rainfall DECIMAL(5, 2),
+    -- PMFBY Damage Reason
+    damage_reason VARCHAR(50),
+    damage_reason_detail TEXT
 );
 
 -- Claim Images
@@ -224,6 +238,23 @@ CREATE TABLE IF NOT EXISTS notifications (
     is_read BOOLEAN DEFAULT FALSE,
     type VARCHAR(20) DEFAULT 'GENERAL',
     sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================
+-- KHASRA REQUESTS (Farmer → Patwari approval)
+-- ============================================
+CREATE TABLE IF NOT EXISTS khasra_requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    farmer_id UUID NOT NULL REFERENCES farmers(id),
+    village VARCHAR(50) NOT NULL,
+    khasra_number VARCHAR(50) NOT NULL,
+    area_acres DECIMAL(10, 2) NOT NULL,
+    latitude DECIMAL(10, 8) NOT NULL,
+    longitude DECIMAL(11, 8) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    patwari_remarks TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    processed_at TIMESTAMP
 );
 
 -- ============================================

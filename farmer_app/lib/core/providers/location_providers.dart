@@ -20,6 +20,6 @@ final villagesProvider = FutureProvider.family<List<VillageModel>, int>((ref, di
   return ref.watch(locationRepositoryProvider).getVillages(districtId);
 });
 
-final availableKhasraProvider = FutureProvider.family<List<KhasraModel>, ({String state, String district, String village})>((ref, loc) async {
+final availableKhasraProvider = FutureProvider.autoDispose.family<List<KhasraModel>, ({String state, String district, String village})>((ref, loc) async {
   return ref.watch(locationRepositoryProvider).getAvailableKhasra(loc.state, loc.district, loc.village);
 });

@@ -29,6 +29,7 @@ class ProfileNotifier extends StateNotifier<AsyncValue<AuthResponse?>> {
   Future<void> register({
     required String phone,
     required String name,
+    required String aadhaarNumber,
     required String address,
     required String stateRegion,
     required String district,
@@ -39,6 +40,7 @@ class ProfileNotifier extends StateNotifier<AsyncValue<AuthResponse?>> {
       final response = await _repository.registerFarmer(
         phone: phone,
         name: name,
+        aadhaarNumber: aadhaarNumber,
         address: address,
         state: stateRegion,
         district: district,

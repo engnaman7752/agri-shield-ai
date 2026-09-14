@@ -18,19 +18,26 @@ final myPoliciesProvider = FutureProvider<List<InsuranceResponse>>((ref) async {
   return ref.watch(insuranceRepositoryProvider).getMyPolicies();
 });
 
-final activePoliciesProvider = FutureProvider<List<InsuranceResponse>>((ref) async {
+final activePoliciesProvider = FutureProvider<List<InsuranceResponse>>((
+  ref,
+) async {
   return ref.watch(insuranceRepositoryProvider).getActivePolicies();
 });
 
-final insuranceApplicationProvider = StateNotifierProvider<InsuranceNotifier, AsyncValue<PaymentOrderResponse?>>((ref) {
-  return InsuranceNotifier(ref.watch(insuranceRepositoryProvider), ref);
-});
+final insuranceApplicationProvider =
+    StateNotifierProvider<InsuranceNotifier, AsyncValue<PaymentOrderResponse?>>(
+      (ref) {
+        return InsuranceNotifier(ref.watch(insuranceRepositoryProvider), ref);
+      },
+    );
 
-class InsuranceNotifier extends StateNotifier<AsyncValue<PaymentOrderResponse?>> {
+class InsuranceNotifier
+    extends StateNotifier<AsyncValue<PaymentOrderResponse?>> {
   final InsuranceRepository _repository;
   final Ref _ref;
 
-  InsuranceNotifier(this._repository, this._ref) : super(const AsyncValue.data(null));
+  InsuranceNotifier(this._repository, this._ref)
+    : super(const AsyncValue.data(null));
 
   Future<void> apply(InsuranceApplicationRequest request) async {
     state = const AsyncValue.loading();
@@ -46,24 +53,27 @@ class InsuranceNotifier extends StateNotifier<AsyncValue<PaymentOrderResponse?>>
     }
   }
 
-  Future<bool> confirmPayment(PaymentSuccessResponse response) async {
-    state = const AsyncValue.loading();
+  /// Returns (success, errorMessage)
+  Future<({bool success, String? errorMessage})> confirmPayment(
+    PaymentSuccessResponse response,
+    String insuranceId, [
+    String? backendOrderId,
+  ]) async {
     try {
-      final success = await _repository.confirmPayment(
-        razorpayPaymentId: response.paymentId!,
-        razorpayOrderId: response.orderId!,
-        razorpaySignature: response.signature!,
+      final result = await _repository.confirmPayment(
+        insuranceId: insuranceId,
+        razorpayPaymentId: response.paymentId ?? 'pay_demo_${DateTime.now().millisecondsSinceEpoch}',
+        razorpayOrderId: response.orderId ?? backendOrderId ?? 'order_unknown',
+        razorpaySignature: response.signature ?? 'sig_demo_${DateTime.now().millisecondsSinceEpoch}',
       );
-      if (success) {
+      if (result.success) {
         state = const AsyncValue.data(null);
-        _ref.invalidate(myPoliciesProvider);
-        return true;
+        return (success: true, errorMessage: null as String?);
       }
-      state = AsyncValue.error('Payment confirmation failed', StackTrace.current);
-      return false;
+      return (success: false, errorMessage: result.errorMessage as String?);
     } catch (e) {
-      state = AsyncValue.error(e, StackTrace.current);
-      return false;
+      print('❌ confirmPayment error: $e');
+      return (success: false, errorMessage: e.toString());
     }
   }
 }

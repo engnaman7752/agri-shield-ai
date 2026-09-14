@@ -29,4 +29,6 @@ public interface KhasraRegistryRepository extends JpaRepository<KhasraRegistry, 
             @Param("districtName") String districtName, @Param("villageName") String villageName);
 
     Optional<KhasraRegistry> findByKhasraNumber(String khasraNumber);
+
+    Optional<KhasraRegistry> findByVillageIdAndKhasraNumber(Long villageId, String khasraNumber);
 }

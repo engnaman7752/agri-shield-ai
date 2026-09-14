@@ -20,6 +20,10 @@ public class FarmerRegisterRequest {
     @Pattern(regexp = "^[0-9]{10}$", message = "Invalid phone number")
     private String phone;
 
+    @NotBlank(message = "Aadhaar number is required")
+    @Pattern(regexp = "^[0-9]{12}$", message = "Aadhaar must be exactly 12 digits")
+    private String aadhaarNumber;
+
     @NotBlank(message = "Name is required")
     private String name;
 

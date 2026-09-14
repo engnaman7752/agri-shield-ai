@@ -142,7 +142,7 @@ public class AuthService {
             throw new BadRequestException("Phone number already registered");
         }
 
-        // Create farmer
+        // Create farmer with Aadhaar
         Farmer farmer = Farmer.builder()
                 .phone(phone)
                 .name(request.getName())
@@ -150,6 +150,7 @@ public class AuthService {
                 .state(request.getState())
                 .district(request.getDistrict())
                 .village(request.getVillage())
+                .aadhaarNumber(request.getAadhaarNumber())
                 .build();
 
         farmer = farmerRepository.save(farmer);
@@ -268,5 +269,71 @@ public class AuthService {
             clean = clean.substring(2);
         }
         return clean;
+    }
+
+    /**
+     * Patwari forgot password - send OTP to phone
+     */
+    @Transactional
+    public OtpResponse patwariiForgotPassword(com.cropinsurance.dto.request.ForgotPasswordRequest request) {
+        String phone = cleanPhone(request.getPhone());
+        log.info("🔑 Patwari forgot password request: {}", phone);
+
+        Patwari patwari = patwariRepository.findByPhone(phone)
+                .orElseThrow(() -> new BadRequestException("No Patwari found with this phone number"));
+
+        String otp = smsService.generateOtp();
+
+        // Mark previous OTPs as used
+        otpRecordRepository.markAllAsUsed("RESET_" + phone);
+
+        // Create new OTP record
+        OtpRecord otpRecord = OtpRecord.builder()
+                .phone("RESET_" + phone)
+                .otp(otp)
+                .expiresAt(LocalDateTime.now().plusMinutes(5))
+                .build();
+        otpRecordRepository.save(otpRecord);
+
+        log.info("📱 Password reset OTP for {}: {} (sent to {})",
+                patwari.getGovernmentId(), otp, phone);
+
+        return OtpResponse.builder()
+                .success(true)
+                .message("OTP sent to registered phone ending in ****" + phone.substring(phone.length() - 4))
+                .debugOtp(otp) // Only for demo
+                .build();
+    }
+
+    /**
+     * Patwari reset password with OTP verification
+     */
+    @Transactional
+    public void patwariiResetPassword(com.cropinsurance.dto.request.ResetPasswordRequest request) {
+        String phone = cleanPhone(request.getPhone());
+        log.info("🔐 Patwari password reset: {}", phone);
+
+        String storageKey = "RESET_" + phone;
+
+        OtpRecord otpRecord = otpRecordRepository.findValidOtp(storageKey, LocalDateTime.now())
+                .orElseThrow(() -> new UnauthorizedException("OTP expired or not found"));
+
+        // Verify OTP matches
+        if (!otpRecord.getOtp().equals(request.getOtp())) {
+            throw new UnauthorizedException("Invalid OTP");
+        }
+
+        // OTP verified - update password
+        Patwari patwari = patwariRepository.findByPhone(phone)
+                .orElseThrow(() -> new BadRequestException("No Patwari found with this phone number"));
+
+        patwari.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        patwariRepository.save(patwari);
+
+        // Mark OTP as used
+        otpRecord.setIsUsed(true);
+        otpRecordRepository.save(otpRecord);
+
+        log.info("✅ Password reset successful for: {}", patwari.getGovernmentId());
     }
 }

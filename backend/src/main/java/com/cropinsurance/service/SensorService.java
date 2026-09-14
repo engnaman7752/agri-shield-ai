@@ -78,7 +78,29 @@ public class SensorService {
     /**
      * Get all sensors
      */
+    @org.springframework.transaction.annotation.Transactional
     public List<Sensor> getAllSensors() {
-        return sensorRepository.findAll();
+        List<Sensor> sensors = new java.util.ArrayList<>(sensorRepository.findAll());
+        if (sensors.isEmpty()) {
+            log.warn("⚠️ No sensors found in DB! Auto-creating prototype sensors...");
+            for (int i = 1; i <= 5; i++) {
+                String code = "SENS-00" + i;
+                try {
+                    if (!sensorRepository.existsByUniqueCode(code)) {
+                        Sensor s = new Sensor();
+                        s.setUniqueCode(code);
+                        s.setIsActive(true);
+                        s = sensorRepository.saveAndFlush(s);
+                        sensors.add(s);
+                    } else {
+                        sensorRepository.findByUniqueCode(code).ifPresent(sensors::add);
+                    }
+                } catch (Exception e) {
+                    log.warn("⚠️ Could not create sensor {}: {}", code, e.getMessage());
+                    sensorRepository.findByUniqueCode(code).ifPresent(sensors::add);
+                }
+            }
+        }
+        return sensors;
     }
 }

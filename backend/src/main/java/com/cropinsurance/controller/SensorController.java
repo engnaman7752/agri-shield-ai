@@ -16,7 +16,7 @@ import java.util.List;
 
 /**
  * Sensor Controller
- * IoT sensor data management (for simulator and real sensors)
+ * IoT sensor data management (for simulator and real ESP32 sensors)
  */
 @RestController
 @RequestMapping("/api/sensors")
@@ -25,6 +25,7 @@ import java.util.List;
 public class SensorController {
 
     private final SensorService sensorService;
+    private final com.cropinsurance.service.MongoSensorSyncService mongoSyncService;
 
     /**
      * Record sensor reading (from simulator or real sensor)
@@ -67,5 +68,29 @@ public class SensorController {
     public ResponseEntity<ApiResponse<List<Sensor>>> getAllSensors() {
         List<Sensor> sensors = sensorService.getAllSensors();
         return ResponseEntity.ok(ApiResponse.success(sensors));
+    }
+
+    /**
+     * Get IoT sensor data summary for a sensor (7-day data from MongoDB)
+     */
+    @GetMapping("/{sensorCode}/iot-data")
+    @Operation(summary = "Get 7-day IoT sensor data from ESP32 (MongoDB)")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> getIotData(
+            @PathVariable String sensorCode) {
+        var data = mongoSyncService.getSensorDataForClaim(sensorCode);
+        return ResponseEntity.ok(ApiResponse.success(data, "IoT sensor data retrieved"));
+    }
+
+    /**
+     * Trigger manual sync from MongoDB
+     */
+    @PostMapping("/sync")
+    @Operation(summary = "Trigger manual sync from MongoDB Atlas")
+    public ResponseEntity<ApiResponse<String>> triggerSync() {
+        mongoSyncService.syncSensorData();
+        String status = mongoSyncService.isMongoAvailable()
+                ? "Sync completed from MongoDB Atlas"
+                : "MongoDB not available - sync skipped";
+        return ResponseEntity.ok(ApiResponse.success(status));
     }
 }

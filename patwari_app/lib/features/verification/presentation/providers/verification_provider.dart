@@ -19,3 +19,11 @@ final availableSensorsProvider = FutureProvider<List<SensorModel>>((ref) async {
 final patwariStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   return ref.read(verificationRepositoryProvider).getDashboardStats();
 });
+
+final pendingKhasraRequestsProvider = FutureProvider<List<KhasraRequestModel>>((ref) async {
+  return ref.watch(verificationRepositoryProvider).getPendingKhasraRequests();
+});
+
+final pendingClaimReviewsProvider = FutureProvider<List<ClaimReviewModel>>((ref) async {
+  return ref.watch(verificationRepositoryProvider).getPendingClaimReviews();
+});

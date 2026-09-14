@@ -1,8 +1,11 @@
 package com.cropinsurance.service;
 
 import com.cropinsurance.dto.request.FarmerRegisterRequest;
+import com.cropinsurance.dto.request.KhasraRequestDTO;
 import com.cropinsurance.dto.response.FarmerProfileResponse;
+import com.cropinsurance.dto.response.KhasraRequestResponse;
 import com.cropinsurance.entity.Farmer;
+import com.cropinsurance.entity.KhasraRequest;
 import com.cropinsurance.entity.enums.InsuranceStatus;
 import com.cropinsurance.exception.BadRequestException;
 import com.cropinsurance.exception.ResourceNotFoundException;
@@ -34,6 +37,7 @@ public class FarmerService {
     private final InsurancePolicyRepository insurancePolicyRepository;
     private final ClaimRepository claimRepository;
     private final NotificationRepository notificationRepository;
+    private final KhasraRequestRepository khasraRequestRepository;
 
     @Value("${file.upload-dir:./uploads}")
     private String uploadDir;
@@ -149,5 +153,60 @@ public class FarmerService {
             return ".jpg";
         int lastDot = filename.lastIndexOf('.');
         return lastDot > 0 ? filename.substring(lastDot) : ".jpg";
+    }
+
+    // ==========================================
+    // KHASRA REQUEST METHODS
+    // ==========================================
+
+    /**
+     * Submit a new khasra request
+     */
+    @Transactional
+    public KhasraRequestResponse submitKhasraRequest(UUID farmerId, KhasraRequestDTO request) {
+        Farmer farmer = farmerRepository.findById(farmerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Farmer", "id", farmerId));
+
+        KhasraRequest khasraRequest = KhasraRequest.builder()
+                .farmer(farmer)
+                .village(request.getVillage())
+                .khasraNumber(request.getKhasraNumber())
+                .areaAcres(request.getAreaAcres())
+                .latitude(request.getLatitude())
+                .longitude(request.getLongitude())
+                .build();
+
+        khasraRequest = khasraRequestRepository.save(khasraRequest);
+        log.info("📋 Khasra request submitted by {} for khasra {}", farmer.getName(), request.getKhasraNumber());
+
+        return toKhasraRequestResponse(khasraRequest);
+    }
+
+    /**
+     * Get farmer's khasra requests
+     */
+    public java.util.List<KhasraRequestResponse> getMyKhasraRequests(UUID farmerId) {
+        return khasraRequestRepository.findByFarmerIdOrderByCreatedAtDesc(farmerId)
+                .stream()
+                .map(this::toKhasraRequestResponse)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    private KhasraRequestResponse toKhasraRequestResponse(KhasraRequest r) {
+        return KhasraRequestResponse.builder()
+                .id(r.getId().toString())
+                .farmerId(r.getFarmer().getId().toString())
+                .farmerName(r.getFarmer().getName())
+                .farmerPhone(r.getFarmer().getPhone())
+                .village(r.getVillage())
+                .khasraNumber(r.getKhasraNumber())
+                .areaAcres(r.getAreaAcres())
+                .latitude(r.getLatitude())
+                .longitude(r.getLongitude())
+                .status(r.getStatus())
+                .patwariRemarks(r.getPatwariRemarks())
+                .createdAt(r.getCreatedAt())
+                .processedAt(r.getProcessedAt())
+                .build();
     }
 }

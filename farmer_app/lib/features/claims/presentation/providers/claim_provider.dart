@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:farmer_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:farmer_app/features/claims/data/claim_repository.dart';
 import 'package:farmer_app/features/claims/data/claim_model.dart';
+import 'package:farmer_app/core/services/weather_service.dart';
 import 'package:image_picker/image_picker.dart';
 
 final claimRepositoryProvider = Provider((ref) {
@@ -28,6 +29,9 @@ class ClaimNotifier extends StateNotifier<AsyncValue<ClaimModel?>> {
     required double latitude,
     required double longitude,
     required List<XFile> images,
+    WeatherData? weatherData,
+    required String damageReason,
+    String? damageReasonDetail,
   }) async {
     state = const AsyncValue.loading();
     try {
@@ -36,6 +40,9 @@ class ClaimNotifier extends StateNotifier<AsyncValue<ClaimModel?>> {
         latitude: latitude,
         longitude: longitude,
         images: images,
+        weatherData: weatherData,
+        damageReason: damageReason,
+        damageReasonDetail: damageReasonDetail,
       );
       if (response != null) {
         state = AsyncValue.data(response);

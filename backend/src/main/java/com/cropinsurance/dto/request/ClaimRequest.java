@@ -28,5 +28,15 @@ public class ClaimRequest {
     @NotNull(message = "Longitude is required")
     private BigDecimal longitude;
 
+    // Weather data captured at claim time (optional)
+    private BigDecimal weatherTemperature;
+    private BigDecimal weatherHumidity;
+    private String weatherCondition;
+    private BigDecimal weatherRainfall;
+
+    // Damage reason (PMFBY categories)
+    private String damageReason;  // DamageReason enum name as string
+    private String damageReasonDetail;  // Optional free-text detail
+
     // Images will be sent separately as multipart
 }

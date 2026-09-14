@@ -29,8 +29,10 @@ class _OtpPageState extends ConsumerState<OtpPage> {
       if (response.requiresRegistration) {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => RegisterPage(phoneNumber: widget.phoneNumber),
+          PageRouteBuilder(
+            pageBuilder: (context, anim1, anim2) => RegisterPage(phoneNumber: widget.phoneNumber),
+            transitionDuration: Duration.zero,
+            reverseTransitionDuration: Duration.zero,
           ),
         );
       } else {

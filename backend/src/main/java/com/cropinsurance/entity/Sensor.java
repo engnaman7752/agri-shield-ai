@@ -27,8 +27,9 @@ public class Sensor {
     @Column(name = "unique_code", unique = true, nullable = false, length = 20)
     private String uniqueCode;
 
-    @OneToOne(mappedBy = "sensor", fetch = FetchType.LAZY)
-    private Land land;
+    @OneToMany(mappedBy = "sensor", fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private List<Land> lands = new ArrayList<>();
 
     @Column(name = "is_active")
     @Builder.Default
@@ -44,5 +45,6 @@ public class Sensor {
     // Sensor readings
     @OneToMany(mappedBy = "sensor", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<SensorReading> readings = new ArrayList<>();
 }

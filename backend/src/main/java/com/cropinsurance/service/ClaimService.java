@@ -40,6 +40,7 @@ public class ClaimService {
     private final AiAssessmentRepository aiAssessmentRepository;
     private final NotificationService notificationService;
     private final AiService aiService;
+    private final MongoSensorSyncService mongoSensorSyncService;
 
     @Value("${file.upload-dir:./uploads}")
     private String uploadDir;
@@ -53,7 +54,6 @@ public class ClaimService {
     /**
      * File a new claim with images
      */
-    @Transactional
     public ClaimResponse fileClaim(UUID farmerId, ClaimRequest request, List<MultipartFile> images) {
         Farmer farmer = farmerRepository.findById(farmerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Farmer", "id", farmerId));
@@ -91,7 +91,7 @@ public class ClaimService {
             throw new BadRequestException("Please upload at least 4 photos of the damaged crop");
         }
 
-        // Create claim
+        // Create claim with weather data
         Claim claim = Claim.builder()
                 .insurance(insurance)
                 .farmer(farmer)
@@ -99,6 +99,12 @@ public class ClaimService {
                 .longitude(request.getLongitude())
                 .sensor(land.getSensor())
                 .status(ClaimStatus.PROCESSING)
+                .weatherTemperature(request.getWeatherTemperature())
+                .weatherHumidity(request.getWeatherHumidity())
+                .weatherCondition(request.getWeatherCondition())
+                .weatherRainfall(request.getWeatherRainfall())
+                .damageReason(parseDamageReason(request.getDamageReason()))
+                .damageReasonDetail(request.getDamageReasonDetail())
                 .build();
         claim = claimRepository.save(claim);
 
@@ -119,20 +125,37 @@ public class ClaimService {
 
         log.info("📸 Claim filed with {} images for insurance: {}", images.size(), insurance.getPolicyNumber());
 
-        // Process with AI (async in real app, sync for prototype)
-        ClaimResponse response = processClaimWithAi(claim, imageUrls);
-
-        // Update insurance status
+        // Update insurance status immediately
         insurance.setStatus(InsuranceStatus.CLAIMED);
         insurancePolicyRepository.save(insurance);
 
-        return response;
+        // Build the immediate response with PROCESSING status
+        ClaimResponse immediateResponse = toClaimResponse(claim, imageUrls, null);
+
+        // Process AI in background — farmer gets redirected instantly
+        final UUID claimId = claim.getId();
+        final List<String> finalImageUrls = new ArrayList<>(imageUrls);
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try {
+                // Small delay to ensure DB commit is fully flushed
+                Thread.sleep(1000);
+                log.info("🤖 Background AI processing started for claim: {}", claimId);
+                processClaimWithAi(claimId, finalImageUrls);
+            } catch (Exception e) {
+                log.error("❌ Background AI processing failed for claim {}: {}", claimId, e.getMessage(), e);
+            }
+        });
+
+        return immediateResponse;
     }
 
     /**
-     * Process claim with AI model
+     * Process claim with AI model (runs async in background)
      */
-    private ClaimResponse processClaimWithAi(Claim claim, List<String> imageUrls) {
+    public void processClaimWithAi(UUID claimId, List<String> imageUrls) {
+        Claim claim = claimRepository.findById(claimId)
+                .orElseThrow(() -> new ResourceNotFoundException("Claim", "id", claimId));
+
         // Call AI service
         AiService.AiPredictionResult prediction = aiService.predictDamage(imageUrls);
 
@@ -159,8 +182,8 @@ public class ClaimService {
 
             log.info("✅ Claim APPROVED: {}% damage, amount: ₹{}", damagePercent, claimAmount);
         } else {
-            status = ClaimStatus.REJECTED;
-            log.info("❌ Claim REJECTED: {}% damage (threshold: {}%)", damagePercent, damageThreshold);
+            status = ClaimStatus.PATWARI_REVIEW;
+            log.info("⚠️ Claim AI Failed -> PENDING PATWARI REVIEW: {}% damage (threshold: {}%)", damagePercent, damageThreshold);
         }
 
         // Update claim
@@ -171,16 +194,58 @@ public class ClaimService {
         claimRepository.save(claim);
 
         // Send notification
-        String notifTitle = status == ClaimStatus.APPROVED ? "Claim Approved! ✅" : "Claim Rejected ❌";
+        String notifTitle = status == ClaimStatus.APPROVED ? "Claim Approved! ✅" : "Patwari Review Required ⚠️";
         String notifMessage = status == ClaimStatus.APPROVED
                 ? String.format("Your claim is approved! Damage: %.1f%%, Amount: ₹%.2f",
                         damagePercent.doubleValue(), claimAmount.doubleValue())
-                : String.format("Your claim is rejected. Damage detected: %.1f%% (minimum: %.0f%% required)",
-                        damagePercent.doubleValue(), damageThreshold);
+                : String.format("Your AI assessment showed %.1f%% damage. It has been sent to the Patwari for manual review.",
+                        damagePercent.doubleValue());
 
         notificationService.sendClaimNotification(claim.getFarmer().getId(), notifTitle, notifMessage);
 
-        return toClaimResponse(claim, imageUrls, prediction);
+        log.info("✅ Background AI processing completed for claim: {}", claimId);
+    }
+
+    /**
+     * Review claim by Patwari (for AI rejected claims)
+     */
+    public void reviewClaimByPatwari(UUID claimId, String action, String comments) {
+        Claim claim = claimRepository.findById(claimId)
+                .orElseThrow(() -> new ResourceNotFoundException("Claim", "id", claimId));
+
+        if (claim.getStatus() != ClaimStatus.PATWARI_REVIEW) {
+            throw new BadRequestException("Claim is not pending patwari review.");
+        }
+
+        if (action.equalsIgnoreCase("RETRY")) {
+            // Give farmer another chance
+            // Mark policy as ACTIVE again so they can file another claim
+            InsurancePolicy policy = claim.getInsurance();
+            policy.setStatus(InsuranceStatus.ACTIVE);
+            insurancePolicyRepository.save(policy);
+            
+            // Mark claim as REJECTED so it's not active anymore
+            claim.setStatus(ClaimStatus.REJECTED);
+            claimRepository.save(claim);
+
+            String title = "Retry Claim ⚠️";
+            String msg = "Patwari reviewed your claim and granted a retry. Please upload clearer photos of the damage.";
+            notificationService.sendClaimNotification(claim.getFarmer().getId(), title, msg);
+
+        } else if (action.equalsIgnoreCase("REJECT")) {
+            // Confirm AI rejection
+            claim.setStatus(ClaimStatus.REJECTED);
+            claimRepository.save(claim);
+
+            String title = "Claim Rejected ❌";
+            String msg = "Your claim was reviewed by the Patwari and the rejection was confirmed.";
+            if (comments != null && !comments.isEmpty()) {
+                msg += " Reason: " + comments;
+            }
+            notificationService.sendClaimNotification(claim.getFarmer().getId(), title, msg);
+        } else {
+            throw new BadRequestException("Invalid action. Must be RETRY or REJECT");
+        }
     }
 
     /**
@@ -262,20 +327,104 @@ public class ClaimService {
 
     private ClaimResponse toClaimResponse(Claim claim, List<String> imageUrls,
             AiService.AiPredictionResult prediction) {
+
+        // Fetch 7-day IoT sensor data for verification
+        Map<String, Object> sensorData = null;
+        try {
+            Sensor claimSensor = claim.getSensor();
+            if (claimSensor != null) {
+                sensorData = mongoSensorSyncService.getSensorDataForClaim(claimSensor.getUniqueCode());
+                log.info("📊 IoT sensor data attached to claim: {} readings", sensorData.get("totalReadings"));
+            }
+        } catch (Exception e) {
+            log.warn("⚠️ Could not fetch IoT data for claim: {}", e.getMessage());
+        }
+
+        // Generate Satellite View URL
+        String satelliteUrl = generateSatelliteImageUrl(claim.getLatitude(), claim.getLongitude());
+
+        String diseaseStr = null;
+        String modelVer = null;
+        if (prediction != null) {
+            diseaseStr = prediction.getDiseaseDetected();
+            modelVer = prediction.getModelVersion();
+        } else {
+            AiAssessment assessment = aiAssessmentRepository.findByClaimId(claim.getId()).orElse(null);
+            if (assessment != null) {
+                modelVer = assessment.getModelVersion();
+                if (assessment.getPredictionDetails() != null && assessment.getPredictionDetails().containsKey("disease_detected")) {
+                    diseaseStr = (String) assessment.getPredictionDetails().get("disease_detected");
+                } else if (assessment.getPredictionDetails() != null && assessment.getPredictionDetails().containsKey("analysis")) {
+                    String analysis = (String) assessment.getPredictionDetails().get("analysis");
+                    if (analysis.contains("detected: ")) {
+                        diseaseStr = analysis.substring(analysis.indexOf("detected: ") + 10);
+                    }
+                }
+            }
+        }
+
         return ClaimResponse.builder()
                 .id(claim.getId().toString())
                 .insuranceId(claim.getInsurance().getId().toString())
                 .policyNumber(claim.getInsurance().getPolicyNumber())
+                .farmerName(claim.getFarmer().getName())
+                .farmerPhone(claim.getFarmer().getPhone())
+                .village(claim.getFarmer().getVillage())
+                .khasraNumber(claim.getInsurance().getLand() != null ? claim.getInsurance().getLand().getKhasraNumber() : "Unknown")
                 .latitude(claim.getLatitude())
                 .longitude(claim.getLongitude())
                 .status(claim.getStatus())
                 .damagePercentage(claim.getDamagePercentage())
                 .claimAmount(claim.getClaimAmount())
-                .diseaseDetected(prediction != null ? prediction.getDiseaseDetected() : null)
-                .modelVersion(prediction != null ? prediction.getModelVersion() : null)
+                .diseaseDetected(diseaseStr)
+                .modelVersion(modelVer)
                 .imageUrls(imageUrls)
+                .sensorData(sensorData)
+                .satelliteImageUrl(satelliteUrl)
+                .weatherTemp(claim.getWeatherTemperature())
+                .weatherHumidity(claim.getWeatherHumidity())
+                .weatherRainfall(claim.getWeatherRainfall())
+                .weatherCondition(claim.getWeatherCondition())
+                .damageReason(claim.getDamageReason() != null ? claim.getDamageReason().name() : null)
+                .damageReasonHindi(claim.getDamageReason() != null ? claim.getDamageReason().getHindi() : null)
+                .damageReasonEnglish(claim.getDamageReason() != null ? claim.getDamageReason().getEnglish() : null)
+                .damageReasonDetail(claim.getDamageReasonDetail())
                 .filedAt(claim.getFiledAt())
                 .processedAt(claim.getProcessedAt())
                 .build();
+    }
+
+    /**
+     * Generate high-res satellite image URL for farm location using Esri ArcGIS World Imagery (Free/No-Auth)
+     */
+    private String generateSatelliteImageUrl(BigDecimal lat, BigDecimal lon) {
+        if (lat == null || lon == null) return null;
+        
+        double latitude = lat.doubleValue();
+        double longitude = lon.doubleValue();
+        
+        // Create a small bounding box around the farm (~400x400 meters)
+        double offset = 0.002;
+        String minLon = String.valueOf(longitude - offset);
+        String minLat = String.valueOf(latitude - offset);
+        String maxLon = String.valueOf(longitude + offset);
+        String maxLat = String.valueOf(latitude + offset);
+        
+        return "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export" +
+               "?bbox=" + minLon + "," + minLat + "," + maxLon + "," + maxLat + 
+               "&bboxSR=4326&size=600,400&format=jpg&f=image";
+    }
+
+    /**
+     * Parse damage reason string to enum (safe)
+     */
+    private com.cropinsurance.entity.enums.DamageReason parseDamageReason(String reason) {
+        if (reason == null || reason.isEmpty()) return null;
+        try {
+            return com.cropinsurance.entity.enums.DamageReason.valueOf(reason.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            log.warn("Unknown damage reason: {}", reason);
+            return com.cropinsurance.entity.enums.DamageReason.OTHER;
+        }
     }
 }

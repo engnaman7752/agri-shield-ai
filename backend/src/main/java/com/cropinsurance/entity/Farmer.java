@@ -43,6 +43,9 @@ public class Farmer {
     @Column(name = "village", nullable = false, length = 50)
     private String village;
 
+    @Column(name = "aadhaar_number", length = 12)
+    private String aadhaarNumber; // 12-digit Aadhaar (stored masked: XXXX-XXXX-1234)
+
     @Column(name = "profile_image")
     private String profileImage; // Path to uploaded photo
 

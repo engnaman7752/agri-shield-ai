@@ -10,6 +10,7 @@ class ProfileRepository {
   Future<AuthResponse> registerFarmer({
     required String phone,
     required String name,
+    required String aadhaarNumber,
     required String address,
     required String state,
     required String district,
@@ -19,6 +20,7 @@ class ProfileRepository {
       final response = await _dio.post('auth/farmer/register', data: {
         'phone': phone,
         'name': name,
+        'aadhaarNumber': aadhaarNumber,
         'address': address,
         'state': state,
         'district': district,

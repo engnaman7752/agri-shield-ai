@@ -50,12 +50,18 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/api/location/**",
                                 "/api/crops/**",
+                                "/swagger-ui.html",
                                 "/swagger-ui/**",
+                                "/api-docs",
                                 "/api-docs/**",
+                                "/v3/api-docs",
                                 "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/webjars/**",
                                 "/uploads/**",
                                 "/admin/**",
                                 "/api/admin/**",
+                                "/api/insurance/internal/**",
                                 "/health",
                                 "/")
                         .permitAll()
@@ -64,11 +70,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/farmer/**").hasRole("FARMER")
                         .requestMatchers("/api/insurance/**").hasRole("FARMER")
                         .requestMatchers("/api/claims/**").hasRole("FARMER")
+                        .requestMatchers("/api/chat/**").authenticated()
 
                         // Patwari endpoints
                         .requestMatchers("/api/patwari/**").hasRole("PATWARI")
 
-                        // Sensor endpoints (both can access)
+                        // Sensor endpoints - reading/sync are public for ESP32 devices
+                        .requestMatchers("/api/sensors/reading", "/api/sensors/sync").permitAll()
                         .requestMatchers("/api/sensors/**").authenticated()
 
                         // Any other request needs authentication

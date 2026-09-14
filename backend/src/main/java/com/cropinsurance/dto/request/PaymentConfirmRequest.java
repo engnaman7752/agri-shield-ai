@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class PaymentConfirmRequest {
 
+    private String insuranceId;  // Primary identifier
     private String razorpayOrderId;
     private String razorpayPaymentId;
     private String razorpaySignature;

@@ -14,7 +14,8 @@ public interface SensorRepository extends JpaRepository<Sensor, UUID> {
 
     Optional<Sensor> findByUniqueCode(String uniqueCode);
 
-    @Query("SELECT s FROM Sensor s WHERE s.land IS NULL AND s.isActive = true")
+    // For prototype: allow assigning the same sensor multiple times and ignore isActive strictness
+    @Query("SELECT s FROM Sensor s")
     List<Sensor> findAvailableSensors();
 
     boolean existsByUniqueCode(String uniqueCode);

@@ -1,6 +1,8 @@
 package com.cropinsurance.service;
 
+import com.cropinsurance.dto.request.KhasraActionRequest;
 import com.cropinsurance.dto.request.VerificationActionRequest;
+import com.cropinsurance.dto.response.KhasraRequestResponse;
 import com.cropinsurance.dto.response.PendingVerificationDTO;
 import com.cropinsurance.entity.*;
 import com.cropinsurance.entity.enums.VerificationStatus;
@@ -33,6 +35,9 @@ public class PatwariService {
     private final LandRepository landRepository;
     private final InsuranceService insuranceService;
     private final NotificationService notificationService;
+    private final KhasraRequestRepository khasraRequestRepository;
+    private final KhasraRegistryRepository khasraRegistryRepository;
+    private final VillageRepository villageRepository;
 
     /**
      * Get pending verifications
@@ -83,9 +88,10 @@ public class PatwariService {
                 Sensor sensor = sensorRepository.findByUniqueCode(request.getSensorCode())
                         .orElseThrow(() -> new ResourceNotFoundException("Sensor", "code", request.getSensorCode()));
 
-                if (sensor.getLand() != null) {
-                    throw new BadRequestException("Sensor is already assigned to another land");
-                }
+                // For prototype: Allow reusing the single sensor for all lands
+                // if (sensor.getLand() != null) {
+                //     throw new BadRequestException("Sensor is already assigned to another land");
+                // }
 
                 Land land = insurance.getLand();
                 land.setSensor(sensor);
@@ -125,8 +131,39 @@ public class PatwariService {
     /**
      * Get available sensors
      */
+    @org.springframework.transaction.annotation.Transactional
     public List<Sensor> getAvailableSensors() {
-        return sensorRepository.findAvailableSensors();
+        List<Sensor> sensors = new java.util.ArrayList<>(sensorRepository.findAvailableSensors());
+        
+        // Auto-provision default prototype sensors if DB is totally empty
+        if (sensors.isEmpty()) {
+            log.warn("⚠️ No sensors found in DB! Auto-creating prototype sensors...");
+            for (int i = 1; i <= 5; i++) {
+                String code = "SENS-00" + i;
+                try {
+                    if (!sensorRepository.existsByUniqueCode(code)) {
+                        Sensor defaultSensor = new Sensor();
+                        defaultSensor.setUniqueCode(code);
+                        defaultSensor.setIsActive(true);
+                        defaultSensor = sensorRepository.saveAndFlush(defaultSensor);
+                        sensors.add(defaultSensor);
+                        log.info("✅ Auto-created sensor: {}", code);
+                    } else {
+                        // Already exists, just fetch it
+                        sensorRepository.findByUniqueCode(code).ifPresent(sensors::add);
+                        log.info("📡 Sensor {} already exists, reusing", code);
+                    }
+                } catch (Exception e) {
+                    log.warn("⚠️ Could not create sensor {}: {}", code, e.getMessage());
+                    // Try to fetch existing one
+                    sensorRepository.findByUniqueCode(code).ifPresent(sensors::add);
+                }
+            }
+        }
+        
+        log.info("🔍 Available sensors count: {}", sensors.size());
+        sensors.forEach(s -> log.info("  📡 Sensor: {} (id={})", s.getUniqueCode(), s.getId()));
+        return sensors;
     }
 
     /**
@@ -138,7 +175,7 @@ public class PatwariService {
         long pending = verificationRepository.findByStatus(VerificationStatus.PENDING).size();
         long approved = verificationRepository.findByStatus(VerificationStatus.APPROVED).size();
         long rejected = verificationRepository.findByStatus(VerificationStatus.REJECTED).size();
-        long availableSensors = sensorRepository.findAvailableSensors().size();
+        long availableSensors = getAvailableSensors().size(); // Use the method that auto-provisions if empty
 
         stats.put("pendingVerifications", pending);
         stats.put("approvedVerifications", approved);
@@ -173,6 +210,104 @@ public class PatwariService {
                 .coverageAmount(ins.getCoverageAmount())
                 .status(v.getStatus())
                 .createdAt(ins.getCreatedAt())
+                .build();
+    }
+
+    // ==========================================
+    // KHASRA REQUEST HANDLING
+    // ==========================================
+
+    /**
+     * Get pending khasra requests
+     */
+    public List<KhasraRequestResponse> getPendingKhasraRequests() {
+        return khasraRequestRepository.findByStatusOrderByCreatedAtAsc("PENDING")
+                .stream()
+                .map(this::toKhasraRequestResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Process khasra request (approve/reject)
+     */
+    @Transactional
+    public KhasraRequestResponse processKhasraRequest(UUID patwariId, KhasraActionRequest request) {
+        KhasraRequest khasraRequest = khasraRequestRepository.findById(request.getRequestId())
+                .orElseThrow(() -> new ResourceNotFoundException("KhasraRequest", "id", request.getRequestId()));
+
+        if (!"PENDING".equals(khasraRequest.getStatus())) {
+            throw new BadRequestException("Khasra request already processed");
+        }
+
+        khasraRequest.setStatus(request.getAction());
+        khasraRequest.setPatwariRemarks(request.getRemarks());
+        khasraRequest.setProcessedAt(java.time.LocalDateTime.now());
+
+        if ("APPROVED".equals(request.getAction())) {
+            // Auto-create khasra_registry entry
+            Village village = villageRepository.findByName(khasraRequest.getVillage()).orElse(null);
+
+            if (village != null) {
+                KhasraRegistry existingKhasra = khasraRegistryRepository
+                        .findByVillageIdAndKhasraNumber(village.getId(), khasraRequest.getKhasraNumber())
+                        .orElse(null);
+
+                if (existingKhasra == null) {
+                    KhasraRegistry newKhasra = KhasraRegistry.builder()
+                            .village(village)
+                            .khasraNumber(khasraRequest.getKhasraNumber())
+                            .areaAcres(khasraRequest.getAreaAcres())
+                            .latitude(khasraRequest.getLatitude())
+                            .longitude(khasraRequest.getLongitude())
+                            .ownerName(khasraRequest.getFarmer().getName())
+                            .isRegistered(false)
+                            .build();
+                    khasraRegistryRepository.save(newKhasra);
+                    log.info("✅ Khasra {} added to registry after Patwari approval (Village: {})", khasraRequest.getKhasraNumber(), village.getName());
+                } else {
+                    existingKhasra.setOwnerName(khasraRequest.getFarmer().getName());
+                    khasraRegistryRepository.save(existingKhasra);
+                    log.info("✅ Khasra {} updated in registry after Patwari approval (Village: {})", khasraRequest.getKhasraNumber(), village.getName());
+                }
+            } else {
+                log.error("❌ CRITICAL: Could not find DB Village for name '{}'. Khasra was NOT added to registry!", 
+                    khasraRequest.getVillage());
+            }
+
+            // Notify farmer
+            notificationService.sendInsuranceNotification(
+                    khasraRequest.getFarmer().getId(),
+                    "Land Approved! ✅",
+                    "Your khasra " + khasraRequest.getKhasraNumber() + " has been verified. You can now apply for insurance.");
+        } else {
+            // Notify farmer of rejection
+            notificationService.sendInsuranceNotification(
+                    khasraRequest.getFarmer().getId(),
+                    "Land Request Rejected ❌",
+                    "Your khasra " + khasraRequest.getKhasraNumber() + " was rejected. Reason: " + request.getRemarks());
+        }
+
+        khasraRequestRepository.save(khasraRequest);
+        log.info("📋 Khasra request {} processed: {}", khasraRequest.getKhasraNumber(), request.getAction());
+
+        return toKhasraRequestResponse(khasraRequest);
+    }
+
+    private KhasraRequestResponse toKhasraRequestResponse(KhasraRequest r) {
+        return KhasraRequestResponse.builder()
+                .id(r.getId().toString())
+                .farmerId(r.getFarmer().getId().toString())
+                .farmerName(r.getFarmer().getName())
+                .farmerPhone(r.getFarmer().getPhone())
+                .village(r.getVillage())
+                .khasraNumber(r.getKhasraNumber())
+                .areaAcres(r.getAreaAcres())
+                .latitude(r.getLatitude())
+                .longitude(r.getLongitude())
+                .status(r.getStatus())
+                .patwariRemarks(r.getPatwariRemarks())
+                .createdAt(r.getCreatedAt())
+                .processedAt(r.getProcessedAt())
                 .build();
     }
 }

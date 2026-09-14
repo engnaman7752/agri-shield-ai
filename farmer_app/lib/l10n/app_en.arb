@@ -1,0 +1,14 @@
+{
+  "@@locale": "en",
+  "appName": "Farmer Shield",
+  "dashboard": "Dashboard",
+  "fileClaim": "File Claim",
+  "applyInsurance": "Apply Insurance",
+  "settings": "Settings",
+  "language": "Language",
+  "login": "Login",
+  "home": "Home",
+  "myPolicies": "My Policies",
+  "weather": "Weather",
+  "profile": "Profile"
+}

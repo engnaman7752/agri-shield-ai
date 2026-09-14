@@ -29,6 +29,9 @@ public class AiService {
     @Value("${ai.service.url:http://localhost:8000}")
     private String aiServiceUrl;
 
+    @Value("${server.port:8085}")
+    private String serverPort;
+
     /**
      * Predict crop damage from images
      */
@@ -48,10 +51,14 @@ public class AiService {
      * Call real AI service (FastAPI)
      */
     private AiPredictionResult callRealAiService(List<String> imageUrls) {
+        List<String> fullImageUrls = imageUrls.stream()
+                .map(url -> url.startsWith("http") ? url : "http://localhost:" + serverPort + url)
+                .collect(java.util.stream.Collectors.toList());
+
         WebClient client = webClientBuilder.baseUrl(aiServiceUrl).build();
 
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("image_urls", imageUrls);
+        requestBody.put("image_urls", fullImageUrls);
 
         Map response = client.post()
                 .uri("/api/predict")
@@ -64,6 +71,9 @@ public class AiService {
             double damage = ((Number) response.get("damage_percentage")).doubleValue();
             String disease = (String) response.get("disease_detected");
             String modelVersion = (String) response.getOrDefault("model_version", "1.0.0");
+            if (modelVersion != null && modelVersion.length() > 20) {
+                modelVersion = modelVersion.substring(0, 20);
+            }
 
             return AiPredictionResult.builder()
                     .damagePercentage(BigDecimal.valueOf(damage))
@@ -108,6 +118,7 @@ public class AiService {
         details.put("confidence", 0.85 + random.nextDouble() * 0.1);
         details.put("analysis", String.format("Analyzed %d images, detected: %s", imageUrls.size(), disease));
         details.put("affected_area_percent", damagePercent);
+        details.put("disease_detected", disease);
 
         log.info("🔮 Simulated prediction: {:.1f}% damage, disease: {}", damagePercent, disease);
 

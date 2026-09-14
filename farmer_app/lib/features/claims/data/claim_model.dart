@@ -10,6 +10,10 @@ class ClaimModel {
   final List<String> imageUrls;
   final String? diseaseDetected;
   final String? remarks;
+  final String? damageReason;
+  final String? damageReasonHindi;
+  final String? damageReasonEnglish;
+  final String? damageReasonDetail;
   final String createdAt;
 
   ClaimModel({
@@ -24,6 +28,10 @@ class ClaimModel {
     required this.imageUrls,
     this.diseaseDetected,
     this.remarks,
+    this.damageReason,
+    this.damageReasonHindi,
+    this.damageReasonEnglish,
+    this.damageReasonDetail,
     required this.createdAt,
   });
 
@@ -40,6 +48,10 @@ class ClaimModel {
       imageUrls: List<String>.from(json['imageUrls'] ?? []),
       diseaseDetected: json['diseaseDetected']?.toString(),
       remarks: json['remarks']?.toString(),
+      damageReason: json['damageReason']?.toString(),
+      damageReasonHindi: json['damageReasonHindi']?.toString(),
+      damageReasonEnglish: json['damageReasonEnglish']?.toString(),
+      damageReasonDetail: json['damageReasonDetail']?.toString(),
       createdAt: json['filedAt']?.toString() ?? '',
     );
   }

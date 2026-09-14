@@ -56,9 +56,12 @@ class LocationRepository {
         'village': village,
       });
       if (response.data['success']) {
-        return (response.data['data'] as List)
+        final allKhasras = (response.data['data'] as List)
             .map((e) => KhasraModel.fromJson(e))
             .toList();
+        // Deduplicate by khasraNumber to prevent DropdownButton crash
+        final seen = <String>{};
+        return allKhasras.where((k) => seen.add(k.khasraNumber)).toList();
       }
       return [];
     } catch (e) {

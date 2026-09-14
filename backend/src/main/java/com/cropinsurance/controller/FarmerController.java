@@ -7,6 +7,7 @@ import com.cropinsurance.service.FarmerService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -73,5 +74,28 @@ public class FarmerController {
             @AuthenticationPrincipal String userId) {
         FarmerProfileResponse dashboard = farmerService.getProfile(UUID.fromString(userId));
         return ResponseEntity.ok(ApiResponse.success(dashboard));
+    }
+
+    /**
+     * Submit a khasra addition request
+     */
+    @PostMapping("/khasra-request")
+    @Operation(summary = "Submit new khasra land request for Patwari verification")
+    public ResponseEntity<ApiResponse<com.cropinsurance.dto.response.KhasraRequestResponse>> submitKhasraRequest(
+            @AuthenticationPrincipal String userId,
+            @Valid @RequestBody com.cropinsurance.dto.request.KhasraRequestDTO request) {
+        var response = farmerService.submitKhasraRequest(UUID.fromString(userId), request);
+        return ResponseEntity.ok(ApiResponse.success(response, "Khasra request submitted for Patwari verification"));
+    }
+
+    /**
+     * Get my khasra requests
+     */
+    @GetMapping("/khasra-requests")
+    @Operation(summary = "Get farmer's khasra requests")
+    public ResponseEntity<ApiResponse<java.util.List<com.cropinsurance.dto.response.KhasraRequestResponse>>> getMyKhasraRequests(
+            @AuthenticationPrincipal String userId) {
+        var requests = farmerService.getMyKhasraRequests(UUID.fromString(userId));
+        return ResponseEntity.ok(ApiResponse.success(requests));
     }
 }
