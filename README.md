@@ -53,6 +53,7 @@
 - Phone-based OTP authentication
 - Easy insurance policy enrollment
 - One-click claim filing with photo uploads
+- **AI Agent Chatbot** for instant Q&A and policy support
 - Real-time claim status tracking
 - Razorpay payment integration
 - Push notifications for updates
@@ -67,6 +68,7 @@
 - **Runtime server configuration** — Configure backend IP on the fly
 
 ### 🤖 AI Capabilities
+- **AI Chatbot**: Conversational agent providing 24/7 agricultural & policy assistance
 - **Model**: ResNet-50 (50-layer Residual Network)
 - **Dataset**: PlantVillage (54,000+ images, 38 classes)
 - **Accuracy**: ~98.7% on validation set
@@ -314,6 +316,7 @@ This is useful when:
 |--------|----------|-------------|
 | `GET` | `/health` | Health check |
 | `POST` | `/api/predict` | Analyze crop images |
+| `POST` | `/api/chat` | Chat with AI agent |
 
 **Full API documentation available at Swagger UI when server is running.**
 
